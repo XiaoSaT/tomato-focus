@@ -1,0 +1,29 @@
+# ---- 构建产物 / 依赖 ----
+node_modules/
+dist/
+release/
+*.log
+__pycache__/
+*.pyc
+
+# ---- 凭据：绝不入库 ----
+.env
+gitinfo.md
+*token*
+*secret*
+githubtoken.md
+
+# ---- 系统垃圾文件 ----
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---- 本地内部文件（作者本地保留，不推到公开仓库）----
+PLAN.md
+*.lnk
+启动番茄专注.bat
+启动番茄专注.vbs
+scripts/aumid-probe/
+scripts/notify-probe.js
+scripts/recover-sessions.mjs
+scripts/test-short-session.md

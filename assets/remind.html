@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>番茄专注 · 提醒</title>
+<style>
+  :root {
+    --ink: #f7f5f2;
+    --ink2: #cfc9c1;
+    --muted: #9a938a;
+    --tomato: #e5534b;
+    --sage: #2e9a71;
+    --card: rgba(255, 255, 255, .055);
+    --line: rgba(255, 255, 255, .12);
+    --accent: var(--tomato);
+    --font: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100%; }
+  body {
+    font-family: var(--font);
+    color: var(--ink);
+    background: radial-gradient(120% 120% at 15% 0%, #3a2b28 0%, #1c1917 55%, #14110f 100%);
+    background-attachment: fixed;
+    display: flex; align-items: center; justify-content: center;
+    padding: 3.4vh 4vw; min-height: 100vh;
+  }
+  body.break { background: radial-gradient(120% 120% at 15% 0%, #24382f 0%, #171c19 55%, #10130f 100%); }
+  body.break { --accent: var(--sage); }
+
+  .wrap { width: 100%; max-width: 1100px; }
+
+  .hero {
+    display: block; width: 100%;
+    height: clamp(150px, 31vh, 330px);
+    object-fit: cover; object-position: 22% center;
+    border-radius: 22px; border: 1px solid var(--line);
+    box-shadow: 0 34px 80px rgba(0, 0, 0, .5);
+  }
+  .hero[hidden] { display: none; }
+
+  .head { display: flex; align-items: center; gap: 14px; margin: 26px 0 4px; }
+  .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); flex: none; box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .kicker { font-size: clamp(12px, 1.1vw, 16px); letter-spacing: .3em; color: var(--muted); text-transform: uppercase; }
+
+  h1 {
+    margin: 8px 0 0;
+    font-size: clamp(30px, 4.6vw, 62px);
+    line-height: 1.1; letter-spacing: -.01em; font-weight: 800;
+  }
+  h1 .hl { color: var(--accent); }
+
+  .lines { margin: 20px 0 0; display: flex; flex-direction: column; gap: 10px; }
+  .line {
+    font-size: clamp(17px, 1.7vw, 27px); font-weight: 650; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--accent);
+    border-radius: 14px; padding: 13px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  }
+  .line .k { color: var(--ink2); font-weight: 600; }
+  .line .v { font-variant-numeric: tabular-nums; font-weight: 800; }
+  .line.dim { color: var(--muted); border-left-color: var(--line); font-size: clamp(15px, 1.4vw, 21px); }
+
+  .foot { margin-top: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: clamp(12px, 1.1vw, 16px); }
+  .foot b { color: var(--ink2); }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; background: rgba(255,255,255,.04); }
+
+  @media print {
+    body { background: #fff; color: #111; }
+    .line { border-color: #ddd; }
+  }
+</style>
+</head>
+<body>
+  <script id="remind-data" type="application/json">{"kind":"focus","title":"番茄专注 提醒（演示）","lines":["输出 82 分（+6%）","一般 74 分（-2%）","阅读无数据"],"heroUrl":"toast-hero-focus.png"}</script>
+  <div class="wrap">
+    <img class="hero" id="hero" alt="" hidden />
+    <div class="head">
+      <span class="dot"></span>
+      <span class="kicker" id="kicker">TomatoFocus</span>
+    </div>
+    <h1 id="title">番茄专注</h1>
+    <div class="lines" id="lines"></div>
+    <div class="foot">
+      <span class="pill">此页可随时关闭</span>
+      <span>回到 <b>番茄专注</b> 窗口继续下一段</span>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    // 数据优先取内嵌 JSON（主进程生成页面时写入），其次兼容 ?k=&t=&l=&h= 查询参数
+    var data = null;
+    try { data = JSON.parse(document.getElementById('remind-data').textContent); } catch (e) { data = null; }
+
+    var q = new URLSearchParams(location.search);
+    if (!data || q.get('t')) {
+      data = {
+        kind: q.get('k') === 'break' ? 'break' : 'focus',
+        title: q.get('t') || (data && data.title) || '番茄专注 提醒',
+        lines: q.get('l') ? q.get('l').split('\n') : (data && data.lines) || [],
+        heroUrl: q.get('h') || (data && data.heroUrl) || ''
+      };
+    }
+
+    var kind = data.kind === 'break' ? 'break' : 'focus';
+    var title = data.title || '番茄专注 提醒';
+    var lines = (data.lines || []).map(function (s) { return String(s).trim(); }).filter(Boolean);
+
+    document.body.className = kind;
+    document.title = title + ' · 番茄专注';
+
+    var heroEl = document.getElementById('hero');
+    if (data.heroUrl) { heroEl.src = data.heroUrl; heroEl.hidden = false; } else { heroEl.hidden = true; }
+
+    // 标题里第一个「·」之后的部分用强调色
+    var i = title.indexOf('·');
+    var t = document.getElementById('title');
+    if (i > 0) {
+      t.innerHTML = '';
+      t.appendChild(document.createTextNode(title.slice(0, i).trim() + ' '));
+      var span = document.createElement('span');
+      span.className = 'hl';
+      span.textContent = title.slice(i + 1).trim();
+      t.appendChild(span);
+    } else {
+      t.textContent = title;
+    }
+
+    document.getElementById('kicker').textContent = kind === 'break' ? 'TomatoFocus · 休息结束' : 'TomatoFocus · 本段结果';
+
+    var box = document.getElementById('lines');
+    lines.forEach(function (raw) {
+      var div = document.createElement('div');
+      div.className = 'line';
+      // 「输出 82 分（+6%）」→ 左标签右数值
+      var m = raw.match(/^(\S+?)\s+(.*)$/);
+      if (m) {
+        var k = document.createElement('span'); k.className = 'k'; k.textContent = m[1];
+        var v = document.createElement('span'); v.className = 'v'; v.textContent = m[2];
+        div.appendChild(k); div.appendChild(v);
+      } else {
+        div.textContent = raw;
+      }
+      if (/无数据|—/.test(raw)) div.classList.add('dim');
+      box.appendChild(div);
+    });
+
+    if (!lines.length) {
+      var d = document.createElement('div');
+      d.className = 'line dim';
+      d.textContent = '准备开始下一段';
+      box.appendChild(d);
+    }
+  })();
+</script>
+</body>
+</html>

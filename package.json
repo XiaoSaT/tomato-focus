@@ -1,0 +1,59 @@
+{
+  "name": "tomato-focus",
+  "version": "0.2.2",
+  "description": "番茄时间 + Enter/Backspace 专注度监控 (Windows, Electron + uiohook-napi)",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.json",
+    "copy:renderer": "node scripts/copy-renderer.js",
+    "build": "npm run build:main && npm run copy:renderer",
+    "start": "npm run build && electron .",
+    "start:test": "npm run build && electron . --test-mode",
+    "dist": "npm run build && electron-builder --win nsis",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "koffi": "^3.3.3",
+    "uiohook-napi": "^1.5.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "electron": "^37.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.4.0"
+  },
+  "build": {
+    "appId": "com.tomatofocus.app",
+    "productName": "TomatoFocus",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "dist/assets/**"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TomatoFocus"
+    }
+  },
+  "allowScripts": {
+    "electron@37.10.3": true,
+    "uiohook-napi@1.5.5": true,
+    "koffi@3.3.3": true
+  }
+}
