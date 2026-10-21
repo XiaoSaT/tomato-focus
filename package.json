@@ -2,6 +2,16 @@
   "name": "tomato-focus",
   "version": "0.2.2",
   "description": "番茄时间 + Enter/Backspace 专注度监控 (Windows, Electron + uiohook-napi)",
+  "license": "MIT",
+  "author": "XiaoSaT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XiaoSaT/tomato-focus.git"
+  },
+  "homepage": "https://github.com/XiaoSaT/tomato-focus",
+  "bugs": {
+    "url": "https://github.com/XiaoSaT/tomato-focus/issues"
+  },
   "main": "dist/main/main.js",
   "scripts": {
     "build:main": "tsc -p tsconfig.json",

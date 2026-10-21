@@ -16,6 +16,7 @@ Windows 10/11 · Electron · TypeScript · 100% 本地运行
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Release](https://img.shields.io/github/v/release/XiaoSaT/tomato-focus?color=red)](https://github.com/XiaoSaT/tomato-focus/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/XiaoSaT/tomato-focus/total)](https://github.com/XiaoSaT/tomato-focus/releases)
+[![License](https://img.shields.io/github/license/XiaoSaT/tomato-focus?color=2b9348)](LICENSE)
 [![Privacy](https://img.shields.io/badge/privacy-local--only-brightgreen)](#数据与隐私)
 
 中文 · [English](#english)
@@ -250,8 +251,7 @@ npm run dist         # 打包 NSIS 安装包
 
 ## 许可
 
-暂未指定开源协议（后续会补上 `LICENSE`）。在补充之前，请勿直接复制、分发或用于商业项目；
-如需使用请先开 Issue 联系作者。
+[MIT License](LICENSE) © 2026 XiaoSaT —— 可自由使用、修改、分发与商用，保留版权与许可声明即可。
 
 ---
 
@@ -306,7 +306,7 @@ Requires Windows 10/11 and Node.js ≥ 18. No admin rights needed.
 Low-level keyboard hooks are sometimes flagged by antivirus software — that is a false positive
 based on technique, not behavior; the source is here for you to audit.
 
-Status: **public**, version 0.2.2 — data shapes may still change. License: TBD (please open an issue first).
+Status: **public**, version 0.2.2 — data shapes may still change. Licensed under the [MIT License](LICENSE).
 Grab the installer from [Releases](https://github.com/XiaoSaT/tomato-focus/releases/latest).
 
 <div align="center"><sub>Built for people who want to know whether 25 minutes was really 25 minutes.</sub></div>
