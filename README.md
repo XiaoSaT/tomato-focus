@@ -14,12 +14,26 @@ Windows 10/11 · Electron · TypeScript · 100% 本地运行
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?logo=windows&logoColor=white)](#运行要求)
 [![Electron](https://img.shields.io/badge/Electron-37-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Status](https://img.shields.io/badge/status-private%20preview-orange)](#项目状态)
+[![Release](https://img.shields.io/github/v/release/XiaoSaT/tomato-focus?color=red)](https://github.com/XiaoSaT/tomato-focus/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/XiaoSaT/tomato-focus/total)](https://github.com/XiaoSaT/tomato-focus/releases)
 [![Privacy](https://img.shields.io/badge/privacy-local--only-brightgreen)](#数据与隐私)
 
 中文 · [English](#english)
 
 </div>
+
+> **A word from the author**
+>
+> Hi everyone, I'm the author of TomatoFocus. There are plenty of pomodoro apps out there and I've
+> tried a few of them, but what I really care about is working efficiently — so I built this focus
+> metric based on keyboard and mouse activity. After using it for a while, I found my attention
+> fluctuating in genuinely interesting ways from day to day. Give it a try and see what yours looks like.
+>
+> **作者的话**
+>
+> 大家好，我是番茄专注的作者。市面上其实有很多番茄时间的软件，我也体验了一些，但想了想，
+> 我主体上还是想要高效工作，所以就做了这个基于键盘和鼠标的专注指标。用了一段时间之后，
+> 我发现了我每天注意力有趣的波动。大家都来试一试吧。
 
 <img src="assets/toast-hero-focus.png" width="100%" alt="TomatoFocus 段结束提醒配图" />
 
@@ -106,7 +120,15 @@ score = max(0, round(80 × 本段该指标速率 ÷ 该指标基线速率))     
 - Node.js ≥ 18（仅从源码运行时需要）
 - 无需管理员权限
 
-### 从源码运行（当前推荐）
+### 下载安装包（推荐）
+
+到 [**Releases**](https://github.com/XiaoSaT/tomato-focus/releases/latest) 下载最新的
+`TomatoFocus Setup x.y.z.exe`（NSIS 安装包，约 91 MB），双击安装即可，无需管理员权限，也不需要 Node.js。
+
+> 安装包未做代码签名，Windows SmartScreen 可能提示「Windows 已保护你的电脑」，
+> 点「更多信息 → 仍要运行」即可；介意的话可以直接从源码构建。
+
+### 从源码运行
 
 ```bash
 git clone https://github.com/XiaoSaT/tomato-focus.git
@@ -214,20 +236,21 @@ npm run dist         # 打包 NSIS 安装包
 
 - [x] 三指标专注度 + 同任务基线
 - [x] 手动基线样本 / 趋势视图 / 三渠道提醒 / 引导说明
-- [ ] 安装包 Release（下一步）
+- [x] 安装包 Release
 - [ ] 一周 / 一月维度的基线稳定性报告
 - [ ] 事件日志的 Python 分析示例（分心检测、打字节奏）
+- [ ] 代码签名（消除 SmartScreen 警告）
 - [ ] 多显示器 / 主题适配细化
 - [ ] 非 Windows 平台（macOS/Linux 钩子与通知差异较大，暂不承诺）
 
 ## 项目状态
 
-当前为 **private preview**：作者自己在用，接口与数据结构仍可能调整。
-欢迎通过 Issue 提建议，正式公开后会补上 LICENSE 与完整截图。
+当前已**公开**，版本 0.2.2：作者自己在用，接口与数据结构仍可能调整。
+欢迎在 [Issues](https://github.com/XiaoSaT/tomato-focus/issues) 提建议或直接提 PR。
 
 ## 许可
 
-暂未指定开源协议。在补充 `LICENSE` 之前，请勿直接复制、分发或用于商业项目；
+暂未指定开源协议（后续会补上 `LICENSE`）。在补充之前，请勿直接复制、分发或用于商业项目；
 如需使用请先开 Issue 联系作者。
 
 ---
@@ -283,6 +306,7 @@ Requires Windows 10/11 and Node.js ≥ 18. No admin rights needed.
 Low-level keyboard hooks are sometimes flagged by antivirus software — that is a false positive
 based on technique, not behavior; the source is here for you to audit.
 
-Status: **private preview**, data shapes may still change. License: TBD (please open an issue first).
+Status: **public**, version 0.2.2 — data shapes may still change. License: TBD (please open an issue first).
+Grab the installer from [Releases](https://github.com/XiaoSaT/tomato-focus/releases/latest).
 
 <div align="center"><sub>Built for people who want to know whether 25 minutes was really 25 minutes.</sub></div>
