@@ -8,6 +8,7 @@ import { createFullscreenWatcher } from './fgwatch';
 import { pomodoro } from './pomodoro';
 import { getConfig, setConfig, getSessions, clearSessions, deleteSessions, type AppConfig } from './store';
 import { getBaselines, normalizeTask, rescoreSessions, type MetricKey } from './focus';
+import { currentLang, t, tc, type Lang } from './i18n';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -77,14 +78,35 @@ function createWindow(): void {
     minHeight: 720,
     backgroundColor: '#f5f3ef',
     icon: resolveIcon(),
-    title: 'TomatoFocus 番茄专注',
+    title: tc('win.title'),
     webPreferences: {
       preload: resolvePreload(),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+  // 去掉 Electron 默认的 File/Edit/View 菜单（对用户没用），DevTools 用 F12 保留
+  Menu.setApplicationMenu(null);
   mainWindow.loadFile(resolveRenderer());
+  if (!app.isPackaged) {
+    mainWindow.webContents.on('before-input-event', (_e, input) => {
+      if (input.type === 'keyDown' && input.key === 'F12') mainWindow?.webContents.toggleDevTools();
+    });
+  }
+  // 截图/文档用：--open-view=trend 启动后直接切到趋势页
+  const openView = (process.argv.find((a) => a.startsWith('--open-view=')) || '').split('=')[1];
+  if (openView === 'trend') {
+    mainWindow.webContents.once('did-finish-load', () => {
+      setTimeout(() => {
+        mainWindow?.webContents
+          .executeJavaScript(
+            "(function(){var c=document.querySelector('.task-chip');if(c)c.click();" +
+              "setTimeout(function(){document.getElementById('btnTrendView').click();},500);})()",
+          )
+          .catch(() => undefined);
+      }, 1500);
+    });
+  }
   mainWindow.on('minimize', () => {
     mainWindow?.hide();
   });
@@ -100,17 +122,10 @@ function emptySeries(): Record<string, { minuteOfDay: number; count: number }[]>
   return { enter: [], space: [], click: [], wheel: [] };
 }
 
+/** 阶段显示名（跟随界面语言） */
 function phaseLabel(phase: string): string {
-  switch (phase) {
-    case 'focus':
-      return '专注中';
-    case 'short':
-      return '短休息';
-    case 'long':
-      return '长休息';
-    default:
-      return '待机';
-  }
+  if (phase === 'focus' || phase === 'short' || phase === 'long') return tc('phase.' + phase);
+  return tc('phase.idle');
 }
 
 /**
@@ -244,11 +259,21 @@ function openWebReminder(p: RemindPayload): void {
     return;
   }
   const heroPath = resolveAsset(p.hero);
+  const lang: Lang = currentLang();
   const data = {
     kind: p.kind,
     title: p.title,
     lines: p.lines,
     heroUrl: heroPath ? pathToFileURL(heroPath).href : '',
+    lang,
+    ui: {
+      kickerFocus: t(lang, 'page.kicker.focus'),
+      kickerBreak: t(lang, 'page.kicker.break'),
+      close: t(lang, 'page.close'),
+      foot: t(lang, 'page.foot'),
+      fallback: t(lang, 'page.fallback'),
+      titleSuffix: t(lang, 'page.titleSuffix'),
+    },
   };
 
   let html: string;
@@ -327,18 +352,15 @@ function remind(p: RemindPayload, only?: string[]): void {
   if (fired.length === 0) remindLog('注意：到点了但三个提醒渠道都关着 —— 去设置里把对应开关打开');
 }
 
-function createTray(): void {
-  const icon = nativeImage.createFromPath(resolveIcon());
-  tray = new Tray(icon);
-  tray.setToolTip('TomatoFocus 番茄专注');
-  const menu = Menu.buildFromTemplate([
-    { label: '显示主界面', click: () => mainWindow?.show() },
-    { label: '开始专注', click: () => pomodoro.start() },
-    { label: '跳过当前段', click: () => pomodoro.skip() },
-    { label: '打开事件日志目录', click: () => shell.openPath(eventLog.getDir()) },
+function buildTrayMenu(): Electron.Menu {
+  return Menu.buildFromTemplate([
+    { label: tc('tray.show'), click: () => mainWindow?.show() },
+    { label: tc('tray.start'), click: () => pomodoro.start() },
+    { label: tc('tray.skip'), click: () => pomodoro.skip() },
+    { label: tc('tray.logs'), click: () => shell.openPath(eventLog.getDir()) },
     { type: 'separator' },
     {
-      label: '开机自启',
+      label: tc('tray.autostart'),
       type: 'checkbox',
       checked: app.getLoginItemSettings().openAtLogin,
       click: (item) => {
@@ -347,45 +369,61 @@ function createTray(): void {
     },
     { type: 'separator' },
     {
-      label: '退出',
+      label: tc('tray.quit'),
       click: () => {
         isQuitting = true;
         app.quit();
       },
     },
   ]);
-  tray.setContextMenu(menu);
+}
+
+function createTray(): void {
+  const icon = nativeImage.createFromPath(resolveIcon());
+  tray = new Tray(icon);
+  tray.setToolTip(tc('tray.tooltip'));
+  tray.setContextMenu(buildTrayMenu());
   tray.on('double-click', () => mainWindow?.show());
+}
+
+/** 语言切换后同步主进程侧的可见文案：窗口标题 + 托盘菜单 */
+function applyLangSideEffects(): void {
+  mainWindow?.setTitle(tc('win.title'));
+  if (tray) {
+    tray.setToolTip(tc('tray.tooltip'));
+    tray.setContextMenu(buildTrayMenu());
+  }
 }
 
 function baselineOf(): Record<MetricKey, { rate: number | null; sampleCount: number }> {
   return getBaselines(normalizeTask(pomodoro.getState().task));
 }
 
-function broadcastTick(): void {
-  safeSend('pomodoro:tick', {
-    ...pomodoro.getState(),
-    keys: keyboardHook.getCounts(),
-    baseline: baselineOf(),
-  });
-}
-
-function registerIpc(): void {
-  ipcMain.handle('app:getState', () => ({
+/** 完整状态：番茄状态 + 实时计数 + 当前任务的三条基线（渲染层单次渲染就够用） */
+function fullState() {
+  return {
     ...pomodoro.getState(),
     keys: keyboardHook.getCounts(),
     hookRunning: keyboardHook.isRunning(),
     baseline: baselineOf(),
     baselineIds: getConfig().baselineIds ?? [],
-  }));
+  };
+}
+
+function broadcastTick(): void {
+  safeSend('pomodoro:tick', fullState());
+}
+
+function registerIpc(): void {
+  ipcMain.handle('app:getState', () => fullState());
   ipcMain.handle('app:getConfig', () => getConfig());
   // 渲染层 init 完主动来取一次：防止弹窗事件发得比监听注册早而丢掉
   // 设置页「立即测试提醒」：按当前开关真发一次，不用等到点，方便确认自己到底看不看得到
   ipcMain.handle('remind:test', () => {
     remind({
       kind: 'focus',
-      title: '提醒测试 · 番茄结束（示例数据）',
-      lines: ['输出 82 分（+6%）', '一般 74 分（-2%）', '阅读无数据'],
+      title: tc('demo.testTitle'),
+      lines: [tc('demo.line.output'), tc('demo.line.general'), tc('demo.line.reading')],
       hero: 'toast-hero-focus.png',
     });
     return getConfig();
@@ -397,6 +435,8 @@ function registerIpc(): void {
   });
   ipcMain.handle('app:setConfig', (_e, patch: Partial<AppConfig>) => {
     const next = setConfig(patch);
+    // 语言切换：托盘菜单/窗口标题是主进程渲染的，需要同步更新
+    if (patch && Object.prototype.hasOwnProperty.call(patch, 'lang')) applyLangSideEffects();
     return next;
   });
   // 展示视图：按当前生效基线（手动样本/自动中位数）实时重算分数，
@@ -474,14 +514,20 @@ function registerIpc(): void {
     setConfig({ baselineIds: [...set] });
     return { baselineIds: [...set], baseline: baselineOf() };
   });
-  ipcMain.handle('pomodoro:start', () => pomodoro.start());
-  ipcMain.handle('pomodoro:pause', () => pomodoro.pause());
-  ipcMain.handle('pomodoro:resume', () => pomodoro.resume());
-  ipcMain.handle('pomodoro:skip', () => pomodoro.skip());
-  ipcMain.handle('pomodoro:reset', () => pomodoro.reset());
-  ipcMain.handle('pomodoro:startPhase', (_e, phase: 'focus' | 'short' | 'long') => pomodoro.startPhase(phase));
-  ipcMain.handle('pomodoro:setTask', (_e, task: string) => pomodoro.setTask(task));
-  ipcMain.handle('pomodoro:finishEarly', () => pomodoro.finishEarly());
+  // 说明：这些操作都返回完整状态（含 baseline），否则改任务/开段后
+  // 渲染层拿不到新的基线，界面会停留在上一次的「无基线」
+  const act = (fn: () => unknown) => {
+    fn();
+    return fullState();
+  };
+  ipcMain.handle('pomodoro:start', () => act(() => pomodoro.start()));
+  ipcMain.handle('pomodoro:pause', () => act(() => pomodoro.pause()));
+  ipcMain.handle('pomodoro:resume', () => act(() => pomodoro.resume()));
+  ipcMain.handle('pomodoro:skip', () => act(() => pomodoro.skip()));
+  ipcMain.handle('pomodoro:reset', () => act(() => pomodoro.reset()));
+  ipcMain.handle('pomodoro:startPhase', (_e, phase: 'focus' | 'short' | 'long') => act(() => pomodoro.startPhase(phase)));
+  ipcMain.handle('pomodoro:setTask', (_e, task: string) => act(() => pomodoro.setTask(task)));
+  ipcMain.handle('pomodoro:finishEarly', () => act(() => pomodoro.finishEarly()));
   ipcMain.handle('hook:reconnect', () => {
     keyboardHook.restart();
     return { running: keyboardHook.isRunning() };
@@ -501,25 +547,27 @@ function wireEvents(): void {
     // record 为空 = 该段被当作垃圾段丢弃（<3s 且无任何操作），此时不提醒
     if (!record) remindLog(`段结束但记录被丢弃（<3s 且无操作），不发提醒；next=${next.phase}`);
     if (record && record.type === 'focus') {
-      const head =
-        record.endedBy === 'early' ? '提前完成' :
-        record.endedBy === 'skip' ? '专注已跳过' : '番茄结束';
+      const headKey =
+        record.endedBy === 'early' ? 'notify.head.early' :
+        record.endedBy === 'skip' ? 'notify.head.skip' : 'notify.head.timer';
       const sc = record.scores;
       const parts: string[] = [];
       if (sc) {
-        const fmt = (label: string, s: { score: number | null; deltaPct: number | null }) =>
-          s.score == null
-            ? `${label}无数据`
-            : `${label} ${s.score} 分（${(s.deltaPct ?? 0) >= 0 ? '+' : ''}${s.deltaPct ?? 0}%）`;
-        parts.push(fmt('输出', sc.output), fmt('一般', sc.general), fmt('阅读', sc.reading));
+        const fmt = (labelKey: string, s: { score: number | null; deltaPct: number | null }) => {
+          const label = tc(labelKey);
+          if (s.score == null) return tc('notify.line.noData', { label });
+          const d = s.deltaPct ?? 0;
+          return tc('notify.line.score', { label, score: s.score, delta: (d >= 0 ? '+' : '') + d });
+        };
+        parts.push(fmt('label.output', sc.output), fmt('label.general', sc.general), fmt('label.reading', sc.reading));
       } else if (record.score == null) {
-        parts.push(`E=${record.enterCount}（无数据）`);
+        parts.push(tc('notify.enterOnly', { n: record.enterCount }));
       } else {
-        parts.push(`一般 ${record.score} 分`);
+        parts.push(tc('notify.line.struct', { label: tc('label.general'), score: record.score }));
       }
       remind({
         kind: 'focus',
-        title: `${head} · ${phaseLabel(next.phase)}开始`,
+        title: tc('notify.headNext', { head: tc(headKey), phase: tc('phase.' + next.phase) }),
         lines: parts,
         hero: 'toast-hero-focus.png',
       });
@@ -527,8 +575,8 @@ function wireEvents(): void {
       // 休息段结束/跳过：不自动开始专注，提醒手动开始
       remind({
         kind: 'break',
-        title: record.endedBy === 'skip' ? '休息已跳过' : '休息结束',
-        lines: ['准备好后点「开始专注」进入下一个番茄'],
+        title: tc(record.endedBy === 'skip' ? 'notify.head.breakSkip' : 'notify.head.break'),
+        lines: [tc('notify.breakBody')],
         hero: 'toast-hero-break.png',
       });
     }
@@ -556,8 +604,8 @@ app.whenReady().then(() => {
       remind(
         {
           kind: 'focus',
-          title: '番茄结束 · 短休息开始（预览）',
-          lines: ['输出 82 分（+6%）', '一般 74 分（-2%）', '阅读无数据'],
+          title: tc('demo.previewTitle'),
+          lines: [tc('demo.line.output'), tc('demo.line.general'), tc('demo.line.reading')],
           hero: 'toast-hero-focus.png',
         },
         only,

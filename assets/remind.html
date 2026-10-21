@@ -73,7 +73,7 @@
 </style>
 </head>
 <body>
-  <script id="remind-data" type="application/json">{"kind":"focus","title":"番茄专注 提醒（演示）","lines":["输出 82 分（+6%）","一般 74 分（-2%）","阅读无数据"],"heroUrl":"toast-hero-focus.png"}</script>
+  <script id="remind-data" type="application/json">{"kind":"focus","title":"番茄专注 提醒（演示）","lines":["输出 82 分（+6%）","一般 74 分（-2%）","阅读无数据"],"heroUrl":"toast-hero-focus.png","lang":"zh","ui":{"kickerFocus":"TomatoFocus · 本段结果","kickerBreak":"TomatoFocus · 休息结束","close":"此页可随时关闭","foot":"回到 <b>番茄专注</b> 窗口继续下一段","fallback":"准备开始下一段","titleSuffix":" · 番茄专注"}}</script>
   <div class="wrap">
     <img class="hero" id="hero" alt="" hidden />
     <div class="head">
@@ -83,8 +83,8 @@
     <h1 id="title">番茄专注</h1>
     <div class="lines" id="lines"></div>
     <div class="foot">
-      <span class="pill">此页可随时关闭</span>
-      <span>回到 <b>番茄专注</b> 窗口继续下一段</span>
+      <span class="pill" id="footClose">此页可随时关闭</span>
+      <span id="footText">回到 <b>番茄专注</b> 窗口继续下一段</span>
     </div>
   </div>
 
@@ -128,14 +128,16 @@
       t.textContent = title;
     }
 
-    document.getElementById('kicker').textContent = kind === 'break' ? 'TomatoFocus · 休息结束' : 'TomatoFocus · 本段结果';
+    document.getElementById('kicker').textContent = kind === 'break' ? uiText.kickerBreak : uiText.kickerFocus;
+    document.getElementById('footClose').textContent = uiText.close;
+    document.getElementById('footText').innerHTML = uiText.foot;
 
     var box = document.getElementById('lines');
     lines.forEach(function (raw) {
       var div = document.createElement('div');
       div.className = 'line';
-      // 「输出 82 分（+6%）」→ 左标签右数值
-      var m = raw.match(/^(\S+?)\s+(.*)$/);
+      // 「输出 82 分（+6%）」/「Output 82 pts (+6%)」→ 左标签右数值；普通句子保持整行
+      var m = raw.match(/^(\S{1,16})\s+([+\-−\d].*)$/);
       if (m) {
         var k = document.createElement('span'); k.className = 'k'; k.textContent = m[1];
         var v = document.createElement('span'); v.className = 'v'; v.textContent = m[2];
@@ -150,7 +152,7 @@
     if (!lines.length) {
       var d = document.createElement('div');
       d.className = 'line dim';
-      d.textContent = '准备开始下一段';
+      d.textContent = uiText.fallback;
       box.appendChild(d);
     }
   })();

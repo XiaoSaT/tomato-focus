@@ -4,7 +4,7 @@ const path = require('path');
 const src = path.join(__dirname, '..', 'src', 'renderer');
 const dest = path.join(__dirname, '..', 'dist', 'renderer');
 fs.mkdirSync(dest, { recursive: true });
-for (const f of ['index.html', 'styles.css', 'renderer.js']) {
+for (const f of ['index.html', 'styles.css', 'i18n.js', 'renderer.js']) {
   fs.copyFileSync(path.join(src, f), path.join(dest, f));
 }
 // app icon for window/taskbar

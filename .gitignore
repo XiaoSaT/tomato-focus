@@ -24,6 +24,9 @@ PLAN.md
 启动番茄专注.bat
 启动番茄专注.vbs
 scripts/aumid-probe/
+scripts/shot.ps1
+scripts/build-release.ps1
+scripts/make-demo-data.mjs
 scripts/notify-probe.js
 scripts/recover-sessions.mjs
 scripts/test-short-session.md

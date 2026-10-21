@@ -3,6 +3,8 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
   const api = window.tomato;
+  /** i18n 查表（当前语言在 I18N 内部维护，切换语言后无需重新定义） */
+  const t = (key, params) => window.I18N.t(key, params);
 
   const R = 108;
   const CIRC = 2 * Math.PI * R;
@@ -14,7 +16,7 @@
   let allSessions = [];   // 全部历史记录（数据永久保留，只是视图按天展示）
   let viewOffset = 0;     // 0 = 今天，-1 = 昨天……趋势页按天查看
   let chartMode = 'day';  // 'day' = 每段专注分时间线 | 'fine' = 5 分钟粒度
-  const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  const weekName = (i) => t('week.' + i);
 
   function dayKey(d) {
     return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
@@ -65,11 +67,13 @@
     }
   });
 
-  const TYPE_NAME = { focus: '专注', short: '短休', long: '长休' };
+  const typeName = (type) => t('type.' + type);
+  /** 存储层的默认任务名固定为中文「未分类」（历史数据兼容），展示时再翻译 */
   const DEFAULT_TASK = '未分类';
+  const taskText = (task) => (!task || task === DEFAULT_TASK ? t('task.uncategorized') : task);
   let lastState = null;
   let lastKeys = { enter: 0, backspace: 0, space: 0, click: 0, wheel: 0 };
-  let cfg = { testMode: false };
+  let cfg = { testMode: false, lang: 'zh' };
   let baselineIds = [];
   const p2 = (n) => String(n).padStart(2, '0');
 
@@ -96,14 +100,14 @@
     return s >= 90 ? 'good' : s >= 75 ? 'mid' : 'low';
   }
   function tierText(s) {
-    return s >= 90 ? '超级认真' : s >= 75 ? '状态稳定' : '有所下降';
+    return s >= 90 ? t('tier.good') : s >= 75 ? t('tier.mid') : t('tier.low');
   }
 
   /** 实时预览：三条指标分别与各自基线速率比较（与主进程 calcFocusScores 同一公式） */
   const LIVE_METRICS = [
-    { key: 'output', label: '输', countOf: (k) => k.space },
-    { key: 'general', label: '一', countOf: (k) => k.enter + k.click },
-    { key: 'reading', label: '阅', countOf: (k) => k.wheel },
+    { key: 'output', labelKey: 'metric.short.output', countOf: (k) => k.space },
+    { key: 'general', labelKey: 'metric.short.general', countOf: (k) => k.enter + k.click },
+    { key: 'reading', labelKey: 'metric.short.reading', countOf: (k) => k.wheel },
   ];
   function liveScores(state) {
     const bl = state.baseline || {};
@@ -111,11 +115,13 @@
     return LIVE_METRICS.map((m) => {
       const b = bl[m.key] || { rate: null, sampleCount: 0 };
       const cnt = m.countOf(lastKeys);
-      if (cnt === 0) return { label: m.label, score: null, deltaPct: null, first: false };
-      if (b.rate == null) return { label: m.label, score: 80, deltaPct: null, first: true };
+      const label = t(m.labelKey);
+      if (cnt === 0) return { key: m.key, label: label, score: null, deltaPct: null, first: false };
+      if (b.rate == null) return { key: m.key, label: label, score: 80, deltaPct: null, first: true };
       const rate = cnt / elapsedMin;
       return {
-        label: m.label,
+        key: m.key,
+        label: label,
         score: Math.max(0, Math.round((80 * rate) / b.rate)),
         deltaPct: Math.round((rate / b.rate - 1) * 100),
         first: false,
@@ -139,8 +145,8 @@
     const paused = state.runState === 'paused';
     const isBreak = state.phase === 'short' || state.phase === 'long';
 
-    const phaseText = { focus: '专注中', short: '短休息', long: '长休息', idle: '待机' }[state.phase] || '待机';
-    $('phaseLabel').textContent = paused ? phaseText + ' · 已暂停' : phaseText;
+    const phaseText = t('phase.' + (state.phase || 'idle'));
+    $('phaseLabel').textContent = paused ? phaseText + ' · ' + t('phase.paused') : phaseText;
     $('timeLabel').textContent = idle ? '25:00' : fmt(state.remainingSec);
 
     const frac = state.totalSec > 0 ? state.remainingSec / state.totalSec : 1;
@@ -152,24 +158,24 @@
       const lv = liveScores(state);
       const anyData = lv.some((x) => x.score != null);
       if (!anyData) {
-        pill.textContent = '本段暂无按键数据';
+        pill.textContent = t('pill.noData');
         pill.className = 'score-pill';
       } else {
         pill.textContent = lv
           .map((x) => (x.score == null ? x.label + '—' : x.label + ' ' + x.score))
           .join(' · ');
         // pill 颜色按一般分（主指标）取档
-        const g = lv.find((x) => x.label === '一');
+        const g = lv.find((x) => x.key === 'general');
         pill.className = 'score-pill ' + (g && g.score != null ? scoreTier(g.score) : 'mid');
       }
     } else if (isBreak) {
-      pill.textContent = '休息一下，不计分';
+      pill.textContent = t('pill.break');
       pill.className = 'score-pill';
     } else if (state.awaitingStart) {
-      pill.textContent = '休息结束 · 点「开始专注」进入下一个番茄';
+      pill.textContent = t('pill.awaitingStart');
       pill.className = 'score-pill mid';
     } else {
-      pill.textContent = '输入任务，开始一段番茄';
+      pill.textContent = t('pill.idle');
       pill.className = 'score-pill';
     }
 
@@ -186,22 +192,22 @@
 
     // 基线展示（三条指标各自基线，分格展示）
     const bl = state.baseline || {};
-    $('baselineCap').textContent = '基线 · ' + (state.task || DEFAULT_TASK);
+    $('baselineCap').textContent = t('baseline.cap', { task: taskText(state.task) });
     [
-      { id: 'blCellOutput', key: 'output', unit: '空格/分' },
-      { id: 'blCellGeneral', key: 'general', unit: 'Enter+左键/分' },
-      { id: 'blCellReading', key: 'reading', unit: '滚轮/分' },
+      { id: 'blCellOutput', key: 'output', unit: 'bl.unit.output' },
+      { id: 'blCellGeneral', key: 'general', unit: 'bl.unit.general' },
+      { id: 'blCellReading', key: 'reading', unit: 'bl.unit.reading' },
     ].forEach((d) => {
       const cell = $(d.id);
       const b = bl[d.key];
       const val = cell.querySelector('.bl-val');
       if (!b || b.rate == null) {
-        val.textContent = '无基线';
-        val.title = '完成一段带该动作（≥1分钟）的专注后自动建档 80 分';
+        val.textContent = t('bl.none');
+        val.title = t('bl.title.none');
         cell.classList.add('none');
       } else {
-        val.textContent = b.rate.toFixed(1) + ' ' + d.unit;
-        val.title = (b.manual ? '手动选定样本 · ' : '自动基线（中位数±3 段均值） · ') + b.sampleCount + ' 段';
+        val.textContent = b.rate.toFixed(1) + ' ' + t(d.unit);
+        val.title = t(b.manual ? 'bl.title.manual' : 'bl.title.auto', { n: b.sampleCount });
         cell.classList.remove('none');
       }
     });
@@ -219,17 +225,17 @@
 
   function setHook(ok, message) {
     const el = $('hookStatus');
-    $('hookText').textContent = (ok ? '钩子运行中' : '钩子异常') + ' · 点击重连';
+    $('hookText').textContent = (ok ? t('hook.ok') : t('hook.bad')) + ' · ' + t('hook.reconnect');
     el.className = 'hook ' + (ok ? 'ok' : 'bad');
     el.title = message || '';
   }
 
   function toast(msg) {
-    const t = $('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(t._h);
-    t._h = setTimeout(() => t.classList.remove('show'), 4200);
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._h);
+    el._h = setTimeout(() => el.classList.remove('show'), 4200);
   }
 
   /* ---------- 段结束提醒大弹窗（一直显示，手动关闭） ---------- */
@@ -243,7 +249,7 @@
 
     const card = $('remindCard');
     card.dataset.kind = p.kind === 'break' ? 'break' : 'focus';
-    $('remindKicker').textContent = p.kind === 'break' ? 'TomatoFocus · 休息结束' : 'TomatoFocus · 本段结果';
+    $('remindKicker').textContent = t(p.kind === 'break' ? 'remind.kicker.break' : 'remind.kicker.focus');
     $('remindTitle').textContent = p.title || '';
 
     const hero = $('remindHero');
@@ -259,7 +265,8 @@
     for (const raw of p.lines || []) {
       const div = document.createElement('div');
       div.className = 'remind-line';
-      const m = /^(\S+?)\s+(.*)$/.exec(raw);
+      // 「输出 82 分（+6%）」/「Output 82 pts (+6%)」→ 左标签右数值；普通句子整行显示
+      const m = /^(\S{1,16})\s+([+\-−\d].*)$/.exec(raw);
       if (m) {
         const k = document.createElement('span');
         k.className = 'k';
@@ -272,7 +279,7 @@
       } else {
         div.textContent = raw;
       }
-      if (/无数据|—/.test(raw)) div.classList.add('dim');
+      if (/无数据|no data|—/i.test(raw)) div.classList.add('dim');
       box.appendChild(div);
     }
 
@@ -314,7 +321,7 @@
     ctx.save();
     ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
     const lh = 16, padX = 10, padY = 8;
-    const tw = Math.max.apply(null, lines.map((t) => ctx.measureText(t).width));
+    const tw = Math.max.apply(null, lines.map((s) => ctx.measureText(s).width));
     const bw2 = tw + padX * 2, bh2 = lines.length * lh + padY * 2 - 4;
     let bx = Math.min(Math.max(x - bw2 / 2, padL), W - padR - bw2);
     let by = y - bh2 - 12;
@@ -325,7 +332,7 @@
     ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'left';
-    lines.forEach((t, i) => ctx.fillText(t, bx + padX, by + padY + 4 + i * lh));
+    lines.forEach((s, i) => ctx.fillText(s, bx + padX, by + padY + 4 + i * lh));
     ctx.restore();
   }
 
@@ -348,8 +355,8 @@
     const xOf = (ms) => padL + ((ms - t0) / (t1 - t0)) * (W - padL - padR);
     // 5 分钟一格浅色网格
     ctx.lineWidth = 1;
-    for (let t = t0; t <= t1; t += 5 * 60000) {
-      const x = Math.round(xOf(t)) + 0.5;
+    for (let tt = t0; tt <= t1; tt += 5 * 60000) {
+      const x = Math.round(xOf(tt)) + 0.5;
       ctx.strokeStyle = '#f3efe8';
       ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
     }
@@ -380,27 +387,27 @@
         } catch { fineBuckets = { enter: [], space: [], click: [], wheel: [] }; }
         fineDay = cacheKey;
       }
-      const names = { general: '一般（Enter+左键）', output: '输出（空格）', reading: '阅读（滚轮）' };
-      $('trendLegend').innerHTML = '<i></i>' + names[fineMetric] + ' · 每 5 分钟按所在段基线折算，分段连线';
+      $('trendLegend').innerHTML =
+        '<i></i>' + t('trend.legend.fine.' + fineMetric) + t('trend.legend.fineSuffix');
       drawFineChart();
     } else {
       const legend = [
-        { color: '#3b7dd8', label: '输出' },
-        { color: '#e5534b', label: '一般' },
-        { color: '#2e9a71', label: '阅读' },
+        { color: '#3b7dd8', key: 'output' },
+        { color: '#e5534b', key: 'general' },
+        { color: '#2e9a71', key: 'reading' },
       ]
-        .map((m) => '<i style="background:' + m.color + '"></i>' + m.label)
+        .map((m) => '<i style="background:' + m.color + '"></i>' + t('label.' + m.key))
         .join('');
-      $('trendLegend').innerHTML = legend + '<span style="margin-left:6px">· 一天内按时间连续展示</span>';
+      $('trendLegend').innerHTML = legend + '<span style="margin-left:6px">· ' + t('trend.legend.day') + '</span>';
       drawDayChart();
     }
   }
 
   /** 整天模式：一天内每段的三条指标分（输出/一般/阅读）沿固定时间轴各连一条曲线 */
   const SERIES_DEF = [
-    { key: 'output', label: '输出', color: '#3b7dd8' },
-    { key: 'general', label: '一般', color: '#e5534b' },
-    { key: 'reading', label: '阅读', color: '#2e9a71' },
+    { key: 'output', color: '#3b7dd8' },
+    { key: 'general', color: '#e5534b' },
+    { key: 'reading', color: '#2e9a71' },
   ];
 
   function drawDayChart() {
@@ -462,7 +469,7 @@
       ctx.font = '13px ' + getComputedStyle(document.body).fontFamily;
       ctx.textAlign = 'center';
       ctx.fillText(
-        isToday() ? '新的一天 · 完成一段专注后，趋势将从这里重新开始' : '这一天还没有专注记录',
+        isToday() ? t('chart.emptyToday') : t('chart.emptyDay'),
         padL + plotW / 2, padT + plotH / 2 + 4
       );
       ctx.textAlign = 'left';
@@ -499,7 +506,7 @@
       ctx.lineJoin = 'round';
       ctx.stroke();
 
-      pts.forEach((p, i) => {
+      pts.forEach((p) => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, isMain ? 3 : 2.2, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
@@ -535,24 +542,31 @@
       const p = chartPts[hoverInfo];
       const s = p.s;
       const rate = (s.enterCount / (s.durationSec / 60)).toFixed(1);
-      const def = SERIES_DEF.find((m) => m.key === p.metric);
+      const metricLabel = t('label.' + p.metric);
+      const sc = s.scores[p.metric];
       const lines = [
-        fmtClock(+new Date(s.start)) + ' 开始 · ' + def.label + '：' +
-          (s.scores[def.key] && s.scores[def.key].score != null ? s.scores[def.key].score + ' 分' : '—'),
-        (s.endedBy === 'early' ? '提前完成' : s.endedBy === 'skip' ? '已放弃' : '到时结束'),
+        t('tooltip.started', {
+          time: fmtClock(+new Date(s.start)),
+          metric: metricLabel,
+          score: sc && sc.score != null ? t('tooltip.points', { n: sc.score }) : t('tooltip.noScore'),
+        }),
+        t('ended.' + (s.endedBy === 'early' ? 'early' : s.endedBy === 'skip' ? 'skip' : 'timer')),
         'E=' + s.enterCount + ' S=' + (s.spaceCount || 0) + ' C=' + (s.clickCount || 0) + ' W=' + (s.wheelCount || 0),
-        rate + ' Enter/分',
+        t('tooltip.rate', { rate: rate }),
       ];
       if (s.scores) {
-        const f = (label, x) => label + (x.score == null ? '—' : ' ' + x.score);
-        lines.push(f('输出', s.scores.output) + ' · ' + f('一般', s.scores.general) + ' · ' + f('阅读', s.scores.reading));
+        const f = (key) => {
+          const x = s.scores[key];
+          return t('label.' + key) + (x.score == null ? '—' : ' ' + x.score);
+        };
+        lines.push(f('output') + ' · ' + f('general') + ' · ' + f('reading'));
       }
-      if (s.task && s.task !== DEFAULT_TASK) lines.push('任务：' + s.task);
+      if (s.task && s.task !== DEFAULT_TASK) lines.push(t('tooltip.task', { task: s.task }));
       drawTooltip(ctx, W, padL, padR, p.x, p.y, lines);
       // 高亮悬停点
       ctx.beginPath();
       ctx.arc(p.x, p.y, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = def.color;
+      ctx.fillStyle = def_color(p.metric);
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#fff';
@@ -560,9 +574,14 @@
     }
   }
 
+  function def_color(metric) {
+    const d = SERIES_DEF.find((m) => m.key === metric);
+    return d ? d.color : '#e5534b';
+  }
+
   /** 5 分钟模式：每个 5 分钟桶折算成分数，口径与整天一致 ——
-   *  速率 = 桶内 Enter ÷ 5（Enter/分），分数 = 80 × 速率 ÷ 所在专注段的基线速率，
-   *  悬停可看与基线的百分比差；颜色按分数档位（绿=超级认真 / 琥珀=状态稳定 / 红=有所下降）。 */
+   *  速率 = 桶内计数 ÷ 5（次/分），分数 = 80 × 速率 ÷ 所在专注段的基线速率，
+   *  悬停可看与基线的百分比差；颜色按分数档位。 */
   function drawFineChart() {
     const { ctx, W, H } = chartCanvas();
     const padL = 30, padR = 16, padT = 16, padB = 28;
@@ -581,7 +600,7 @@
       ctx.font = '13px ' + getComputedStyle(document.body).fontFamily;
       ctx.textAlign = 'center';
       ctx.fillText(
-        isToday() ? '今天还没有按键明细 · 开始一段专注后，这里会出现 5 分钟粒度曲线' : '这一天没有按键明细记录',
+        isToday() ? t('fine.emptyToday') : t('fine.emptyDay'),
         padL + plotW / 2, padT + plotH / 2 + 4
       );
       ctx.textAlign = 'left';
@@ -599,8 +618,8 @@
     // 桶 → 所在专注段 → 按当前指标的基线折算分数（无法折算的桶不画，只保留背景带）
     const pts = [];
     for (const b of buckets) {
-      const t = baseMs + b.minuteOfDay * 60000;
-      const mid = t + BM / 2;
+      const tt = baseMs + b.minuteOfDay * 60000;
+      const mid = tt + BM / 2;
       const sess = daySess.find((s) => {
         const a = +new Date(s.start), z = a + (s.durationSec || 0) * 1000;
         return mid >= a && mid <= z;
@@ -611,7 +630,7 @@
       if (baseRate == null) continue;
       const rate = b.count / 5; // 次/分
       const score = Math.max(0, Math.round((80 * rate) / baseRate));
-      pts.push({ t, b, sess, score });
+      pts.push({ t: tt, b, sess, score });
     }
 
     const emptyMsg = (msg) => {
@@ -623,7 +642,7 @@
     };
 
     if (pts.length === 0) {
-      emptyMsg('这一天没有可折算分数的专注段明细（基线未建档，或按键都在段外）');
+      emptyMsg(t('fine.emptyNoBaseline'));
       return;
     }
 
@@ -712,11 +731,11 @@
       const d = baseRate != null ? Math.round((rate / baseRate) * 100 - 100) : null;
       const lines = [
         fmtClock(p.t) + ' – ' + fmtClock(p.t + BM),
-        p.score + ' 分（' + tierText(p.score) + '）',
-        p.b.count + ' 次 · ' + rate.toFixed(1) + ' 次/分',
-        d == null ? '首段建档' : 'vs 基线 ' + (d >= 0 ? '+' : '') + d + '%',
+        p.score + ' ' + t('unit.pts') + ' (' + tierText(p.score) + ')',
+        p.b.count + ' ' + t('fine.countUnit') + ' · ' + rate.toFixed(1) + t('fine.perMin'),
+        d == null ? t('fine.firstBaseline') : t('fine.vsBaseline', { d: (d >= 0 ? '+' : '') + d + '%' }),
       ];
-      if (s.task && s.task !== DEFAULT_TASK) lines.push('任务：' + s.task);
+      if (s.task && s.task !== DEFAULT_TASK) lines.push(t('tooltip.task', { task: s.task }));
       drawTooltip(ctx, W, padL, padR, p.x, p.y, lines);
     }
   }
@@ -788,12 +807,12 @@
         }
         if (heatHover && heatHover.c === c && heatHover.r === r) {
           const lines = [
-            (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + WEEK[d.getDay()],
-            cnt === 0 ? '无专注记录' : cnt + ' 段专注',
+            (d.getMonth() + 1) + '/' + d.getDate() + ' ' + weekName(d.getDay()),
+            cnt === 0 ? t('heat.none') : t('heat.count', { n: cnt }),
             info && info.scores.length
-              ? '平均分 ' + Math.round(info.scores.reduce((a, b) => a + b, 0) / info.scores.length)
-              : '无评分',
-            '点击查看该天趋势',
+              ? t('heat.avg', { n: Math.round(info.scores.reduce((a, b) => a + b, 0) / info.scores.length) })
+              : t('heat.noScore'),
+            t('heat.click'),
           ];
           drawTooltip(ctx, W, padL, 8, x + cell / 2, y, lines);
         }
@@ -804,14 +823,14 @@
         prevMonth = d0.getMonth();
         ctx.fillStyle = '#958e84';
         ctx.textAlign = 'left';
-        ctx.fillText((d0.getMonth() + 1) + '月', padL + c * (cell + gap), padT - 6);
+        ctx.fillText(t('heat.month', { m: d0.getMonth() + 1 }), padL + c * (cell + gap), padT - 6);
       }
     }
     // 星期标签（周一 / 周三 / 周五）
     ctx.fillStyle = '#958e84';
     ctx.textAlign = 'left';
-    ['一', '三', '五'].forEach((t, i) => {
-      ctx.fillText(t, 4, padT + i * 2 * (cell + gap) + cell / 2 + 4);
+    [1, 3, 5].forEach((wd, i) => {
+      ctx.fillText(t('weekShort.' + wd), 4, padT + i * 2 * (cell + gap) + cell / 2 + 4);
     });
   }
 
@@ -877,8 +896,9 @@
 
   function renderDayLabel() {
     const d = viewDay();
-    const prefix = viewOffset === 0 ? '今天 · ' : viewOffset === -1 ? '昨天 · ' : '';
-    $('dayLabel').textContent = prefix + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + WEEK[d.getDay()];
+    const prefix = viewOffset === 0 ? t('day.today') + ' · ' : viewOffset === -1 ? t('day.yesterday') + ' · ' : '';
+    $('dayLabel').textContent =
+      prefix + t('day.date', { m: d.getMonth() + 1, d: d.getDate() }) + ' ' + weekName(d.getDay());
     $('btnNextDay').disabled = isToday();
     $('btnToday').hidden = isToday();
   }
@@ -897,7 +917,7 @@
     tb.innerHTML = '';
     const rows = sessions.slice(-14).reverse();
     if (rows.length === 0) {
-      tb.innerHTML = '<tr><td colspan="8" class="empty">本日暂无记录</td></tr>';
+      tb.innerHTML = '<tr><td colspan="8" class="empty">' + t('table.empty') + '</td></tr>';
       return;
     }
     const scoreCell = (x) =>
@@ -916,14 +936,14 @@
         : s.scores || { output: null, general: { score: s.score }, reading: null };
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><span class="pill ' + s.type + '">' + (TYPE_NAME[s.type] || s.type) + '</span></td>' +
-        '<td class="task-cell" title="' + (s.task || '') + '">' + (s.task || '—') + ended + '</td>' +
+        '<td><span class="pill ' + s.type + '">' + typeName(s.type) + '</span></td>' +
+        '<td class="task-cell" title="' + (s.task || '') + '">' + taskText(s.task) + ended + '</td>' +
         '<td>' + when + '</td>' +
         '<td class="counts-cell">' + counts + '</td>' +
         '<td>' + scoreCell(sc.output) + '</td>' +
         '<td>' + scoreCell(sc.general) + '</td>' +
         '<td>' + scoreCell(sc.reading) + '</td>' +
-        '<td class="del-cell"><button class="btn-del" data-id="' + s.id + '" title="删除这条记录（原始事件日志保留）">✕</button></td>';
+        '<td class="del-cell"><button class="btn-del" data-id="' + s.id + '" title="' + t('table.delete') + '">✕</button></td>';
       tb.appendChild(tr);
     });
   }
@@ -942,19 +962,19 @@
   function renderTaskChips(sessions) {
     const seen = [];
     for (let i = sessions.length - 1; i >= 0 && seen.length < 4; i--) {
-      const t = (sessions[i].task || '').trim();
-      if (t && t !== DEFAULT_TASK && !seen.includes(t)) seen.push(t);
+      const tt = (sessions[i].task || '').trim();
+      if (tt && tt !== DEFAULT_TASK && !seen.includes(tt)) seen.push(tt);
     }
     const box = $('taskChips');
     box.innerHTML = '';
-    seen.forEach((t) => {
+    seen.forEach((task) => {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'task-chip';
-      chip.textContent = t;
+      chip.textContent = task;
       chip.onclick = () => {
-        $('taskInput').value = t;
-        api.setTask(t).then(render);
+        $('taskInput').value = task;
+        api.setTask(task).then(render);
       };
       box.appendChild(chip);
     });
@@ -969,7 +989,7 @@
       .slice(-12)
       .reverse();
     if (cands.length === 0) {
-      list.innerHTML = '<p class="empty" style="padding:10px 0">完成几段专注后，这里可以勾选基线样本</p>';
+      list.innerHTML = '<p class="empty" style="padding:10px 0">' + t('bl.samples.empty') + '</p>';
     }
     cands.forEach((s) => {
       const d = new Date(s.start);
@@ -981,9 +1001,10 @@
       item.innerHTML =
         '<input type="checkbox" ' + (sel ? 'checked' : '') + '/>' +
         '<span class="bl-when">' + when + '</span>' +
-        '<span class="bl-task" title="' + (s.task || '') + '">' + (s.task || '—') + '</span>' +
-        '<span class="bl-meta">E=' + s.enterCount + ' · ' + rate + '/分 · ' +
-        Math.round(s.durationSec / 60) + '分' + (s.score != null ? ' · ' + s.score + '分' : '') + '</span>';
+        '<span class="bl-task" title="' + (s.task || '') + '">' + taskText(s.task) + '</span>' +
+        '<span class="bl-meta">E=' + s.enterCount + ' · ' + rate + t('fine.perMin') + ' · ' +
+        Math.round(s.durationSec / 60) + ' ' + t('cfg.unitMin') +
+        (s.score != null ? ' · ' + s.score + ' ' + t('unit.pts') : '') + '</span>';
       const cb = item.querySelector('input');
       cb.addEventListener('change', async () => {
         const res = await api.toggleBaseline(s.id, cb.checked);
@@ -998,8 +1019,8 @@
         await refreshSessions();
         const gb = res.baseline && res.baseline.general;
         toast(gb && gb.rate != null && gb.manual
-          ? '手动基线已生效：一般 ' + gb.rate.toFixed(1) + ' 次/分（' + gb.sampleCount + ' 段）'
-          : '已恢复自动基线');
+          ? t('bl.manualDone', { rate: gb.rate.toFixed(1), n: gb.sampleCount })
+          : t('bl.autoDone'));
       });
       list.appendChild(item);
     });
@@ -1019,13 +1040,43 @@
     await drawTrend();
   }
 
+  /* ---------- 语言切换 ---------- */
+  function syncLangSeg() {
+    const lang = window.I18N.getLang();
+    $('btnLangZh').classList.toggle('active', lang === 'zh');
+    $('btnLangEn').classList.toggle('active', lang === 'en');
+  }
+
+  /** 应用语言：静态节点 + 所有动态渲染（不重载窗口，计数与计时状态不丢） */
+  async function applyLang(next, notify) {
+    window.I18N.setLang(next);
+    window.I18N.apply();
+    syncLangSeg();
+    setHook($('hookStatus').classList.contains('ok'), $('hookStatus').title);
+    if (lastState) render(lastState);
+    renderDayLabel();
+    renderDayStats(allSessions);
+    renderStats(allSessions);
+    renderTaskChips(allSessions);
+    renderBaselineList(allSessions);
+    renderTable(sessionsOfDay(allSessions));
+    drawHeatmap();
+    await drawTrend();
+    $('remindTestHint').textContent = t('cfg.remind.hint');
+    if (notify) toast(t('toast.langChanged'));
+  }
+
   /* ---------- 初始化 ---------- */
   async function init() {
     if (!api) {
-      document.body.innerHTML = '<p style="padding:40px">preload 未加载，请用 electron 启动。</p>';
+      document.body.innerHTML = '<p style="padding:40px">' + t('toast.noPreload') + '</p>';
       return;
     }
     cfg = await api.getConfig();
+    window.I18N.setLang(cfg.lang === 'en' ? 'en' : 'zh');
+    window.I18N.apply();
+    syncLangSeg();
+
     $('cfgFocus').value = cfg.focusMinutes;
     $('cfgShort').value = cfg.shortBreakMinutes;
     $('cfgLong').value = cfg.longBreakMinutes;
@@ -1036,31 +1087,45 @@
     $('cfgNotifyWeb').checked = !!cfg.notifyWeb;
     $('testBadge').hidden = !cfg.testMode;
 
+    // 语言：两个按钮即点即切（写入配置，主进程同步托盘/通知语言）
+    $('btnLangZh').onclick = async () => {
+      if (window.I18N.getLang() === 'zh') return;
+      cfg = await api.setConfig({ lang: 'zh' });
+      await applyLang('zh', true);
+    };
+    $('btnLangEn').onclick = async () => {
+      if (window.I18N.getLang() === 'en') return;
+      cfg = await api.setConfig({ lang: 'en' });
+      await applyLang('en', true);
+    };
+
     // 提醒渠道开关：即改即存（之前必须再点上面的「保存」才生效，
     // 而「保存」在上一行、开关在下一块，很容易拨完开关却什么也没存上）
     const notifySwitches = [
-      ['cfgNotifySystem', 'notifySystem'],
-      ['cfgNotifyPopup', 'notifyPopup'],
-      ['cfgNotifyWeb', 'notifyWeb'],
+      ['cfgNotifySystem', 'notifySystem', 'cfg.remind.system'],
+      ['cfgNotifyPopup', 'notifyPopup', 'cfg.remind.popup'],
+      ['cfgNotifyWeb', 'notifyWeb', 'cfg.remind.web'],
     ];
-    for (const [elId, key] of notifySwitches) {
+    for (const [elId, key, labelKey] of notifySwitches) {
       $(elId).onchange = async () => {
         const checked = $(elId).checked;
         cfg = await api.setConfig({ [key]: checked });
-        const label = $(elId).closest('label').textContent.trim();
-        toast((checked ? '已开启' : '已关闭') + '：' + label + '（立即生效）');
+        toast(t('toast.switchDone', {
+          state: t(checked ? 'toast.switchOn' : 'toast.switchOff'),
+          label: t(labelKey),
+        }));
       };
     }
     $('btnTestRemind').onclick = async () => {
       const res = await api.testRemind();
       cfg = res || cfg;
       const names = [];
-      if (cfg.notifySystem !== false) names.push('系统通知');
-      if (cfg.notifyPopup) names.push('应用内弹窗');
-      if (cfg.notifyWeb) names.push('浏览器网页');
+      if (cfg.notifySystem !== false) names.push(t('cfg.remind.system'));
+      if (cfg.notifyPopup) names.push(t('cfg.remind.popup'));
+      if (cfg.notifyWeb) names.push(t('cfg.remind.web'));
       $('remindTestHint').textContent =
-        names.length > 0 ? '已发送：' + names.join(' + ') : '三个开关都关着，先打开一个再测';
-      toast(names.length > 0 ? '已发送测试提醒' : '三个渠道都关着');
+        names.length > 0 ? t('toast.testSentTo', { names: names.join(' + ') }) : t('toast.testNoneHint');
+      toast(names.length > 0 ? t('toast.testSent') : t('toast.testNone'));
     };
 
     $('btnRemindClose').onclick = hideRemind;
@@ -1102,13 +1167,13 @@
       if (record && record.type === 'focus') {
         const sc = record.scores;
         if (!sc) {
-          toast(record.score == null ? '本段无按键数据' : record.score + ' 分');
+          toast(record.score == null ? t('toast.noKeys') : t('toast.scoreUnit', { n: record.score }));
         } else {
-          const f = (x) => (x.score == null ? '—' : x.score + ' 分');
-          toast('输出 ' + f(sc.output) + ' · 一般 ' + f(sc.general) + ' · 阅读 ' + f(sc.reading));
+          const f = (key) => (sc[key].score == null ? t('toast.noData') : t('toast.scoreUnit', { n: sc[key].score }));
+          toast(t('toast.scores', { o: f('output'), g: f('general'), r: f('reading') }));
         }
       } else if (record) {
-        toast('休息结束 · 手动开始下一个专注');
+        toast(t('toast.breakOver'));
       }
       await refreshSessions();
     });
@@ -1131,8 +1196,8 @@
     $('btnLong').onclick = async () => render(await api.startPhase('long'));
     $('hookStatus').onclick = async () => {
       const r = await api.reconnectHook();
-      setHook(r.running, r.running ? '' : '重连失败，见主进程日志');
-      toast(r.running ? '钩子已重连' : '钩子重连失败，请查看日志');
+      setHook(r.running, r.running ? '' : t('toast.hookReconnectFail'));
+      toast(r.running ? t('toast.hookReconnected') : t('toast.hookReconnectFail'));
     };
 
     // 视图切换 & 趋势页
@@ -1159,7 +1224,7 @@
         notifyWeb: $('cfgNotifyWeb').checked,
       });
       $('testBadge').hidden = !cfg.testMode;
-      toast(cfg.testMode ? '已保存 · 测试模式每段 1 分钟' : '设置已保存');
+      toast(cfg.testMode ? t('toast.savedTest') : t('toast.saved'));
     };
     $('cfgTest').onchange = async () => {
       cfg = await api.setConfig({ testMode: $('cfgTest').checked });
@@ -1170,7 +1235,7 @@
       baselineIds = [];
       $('btnAutoBaseline').hidden = true;
       await refreshSessions();
-      toast('历史已清空');
+      toast(t('toast.cleared'));
     };
 
     // 表格行内删除：只删展示用的 session 记录（如测试产生的数据点），
@@ -1178,13 +1243,13 @@
     document.querySelector('#historyTable tbody').addEventListener('click', async (e) => {
       const btn = e.target.closest('.btn-del');
       if (!btn) return;
-      if (!window.confirm('删除这条记录？（原始事件日志保留，不受影响）')) return;
+      if (!window.confirm(t('table.confirmDelete'))) return;
       const res = await api.deleteSessions([btn.dataset.id]);
       baselineIds = res.baselineIds || [];
       $('btnAutoBaseline').hidden = baselineIds.length === 0;
       await refreshSessions();
       if (lastState) render(lastState);
-      toast('已删除该条记录');
+      toast(t('toast.deleted'));
     });
 
     $('btnAutoBaseline').onclick = async () => {
@@ -1196,7 +1261,7 @@
       $('btnAutoBaseline').hidden = true;
       await refreshSessions();
       if (lastState) render(lastState);
-      toast('已恢复自动基线（中位数±3 段均值）');
+      toast(t('bl.autoDoneLong'));
     };
 
     window.addEventListener('resize', () => refreshSessions());

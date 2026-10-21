@@ -7,6 +7,8 @@ export interface AppConfig {
   longBreakEvery: number;
   testMode: boolean; // 1分钟一段，方便验证
   smoothC: number;    // 平滑常数，默认 5
+  /** 界面语言：'zh' | 'en'；空字符串 = 跟随系统 */
+  lang: 'zh' | 'en' | '';
   baselineIds: string[]; // 手动选定的基线样本 session id（选定后优先于自动中位数）
   guideAck: boolean;  // 启动引导弹窗「我已知晓，不再出现」已确认
   // 段结束提醒渠道（可各自独立开关）
@@ -67,6 +69,7 @@ const defaults: StoreSchema = {
     longBreakEvery: 4,
     testMode: false,
     smoothC: 5,
+    lang: '',
     baselineIds: [],
     guideAck: false,
     notifySystem: true,

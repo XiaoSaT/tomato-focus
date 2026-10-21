@@ -1,7 +1,7 @@
 {
   "name": "tomato-focus",
-  "version": "0.2.2",
-  "description": "番茄时间 + Enter/Backspace 专注度监控 (Windows, Electron + uiohook-napi)",
+  "version": "0.3.0",
+  "description": "Pomodoro timer that scores your focus from keyboard/mouse behaviour against your own per-task baseline (Windows, Electron + uiohook-napi)",
   "license": "MIT",
   "author": "XiaoSaT",
   "repository": {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
-  <title>TomatoFocus 番茄专注</title>
+  <title>TomatoFocus</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -29,6 +29,7 @@
     <symbol id="i-space" viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="5" rx="1.5"/></symbol>
     <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 3v6"/></symbol>
     <symbol id="i-wheel" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="5"/><path d="M12 9v6"/><path d="M9.5 10.5 12 8l2.5 2.5"/><path d="M9.5 13.5 12 16l2.5-2.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17"/><path d="M12 3c2.4 2.4 3.6 5.4 3.6 9s-1.2 6.6-3.6 9c-2.4-2.4-3.6-5.4-3.6-9S9.6 5.4 12 3z"/></symbol>
   </svg>
 
   <header class="topbar">
@@ -36,13 +37,13 @@
       <span class="mark"><svg viewBox="0 0 24 24" class="i"><use href="#i-tomato"/></svg></span>
       <div>
         <h1>TomatoFocus</h1>
-        <p>番茄专注 · 键盘专注度</p>
+        <p data-i18n="app.subtitle">番茄专注 · 键盘专注度</p>
       </div>
     </div>
     <div class="top-right">
-      <span class="test-badge" id="testBadge" hidden>测试模式 · 每段 1 分钟</span>
-      <button id="btnTrendView" class="btn-view"><svg viewBox="0 0 24 24" class="i"><use href="#i-chart"/></svg>专注趋势</button>
-      <div class="hook" id="hookStatus"><span class="dot"></span><span id="hookText">连接中</span></div>
+      <span class="test-badge" id="testBadge" hidden data-i18n="badge.test">测试模式 · 每段 1 分钟</span>
+      <button id="btnTrendView" class="btn-view"><svg viewBox="0 0 24 24" class="i"><use href="#i-chart"/></svg><span data-i18n="nav.trend">专注趋势</span></button>
+      <div class="hook" id="hookStatus"><span class="dot"></span><span id="hookText" data-i18n="hook.connecting">连接中</span></div>
     </div>
   </header>
 
@@ -52,14 +53,14 @@
     <!-- 计时主卡 -->
     <section class="card timer-card">
       <div class="task-row">
-        <input id="taskInput" maxlength="30" placeholder="本段做什么？如：写代码 / 写文档（一段一种类型）" />
+        <input id="taskInput" maxlength="30" data-i18n-ph="task.placeholder" placeholder="本段做什么？如：写代码 / 写文档（一段一种类型）" />
         <div class="task-chips" id="taskChips"></div>
       </div>
 
-      <div class="seg" role="tablist" aria-label="阶段">
-        <button id="btnFocus" class="seg-btn"><svg viewBox="0 0 24 24" class="i"><use href="#i-tomato"/></svg>专注</button>
-        <button id="btnShort" class="seg-btn"><svg viewBox="0 0 24 24" class="i"><use href="#i-coffee"/></svg>短休</button>
-        <button id="btnLong" class="seg-btn"><svg viewBox="0 0 24 24" class="i"><use href="#i-moon"/></svg>长休</button>
+      <div class="seg" role="tablist">
+        <button id="btnFocus" class="seg-btn"><svg viewBox="0 0 24 24" class="i"><use href="#i-tomato"/></svg><span data-i18n="seg.focus">专注</span></button>
+        <button id="btnShort" class="seg-btn"><svg viewBox="0 0 24 24" class="i"><use href="#i-coffee"/></svg><span data-i18n="seg.short">短休</span></button>
+        <button id="btnLong" class="seg-btn"><svg viewBox="0 0 24 24" class="i"><use href="#i-moon"/></svg><span data-i18n="seg.long">长休</span></button>
       </div>
 
       <div class="ring-wrap">
@@ -68,82 +69,92 @@
           <circle cx="120" cy="120" r="108" class="ring-fg" id="ringFg" />
         </svg>
         <div class="ring-center">
-          <div class="phase" id="phaseLabel">待机</div>
+          <div class="phase" id="phaseLabel" data-i18n="phase.idle">待机</div>
           <div class="time" id="timeLabel">--:--</div>
-          <div class="score-pill" id="liveScore">开始一段番茄吧</div>
+          <div class="score-pill" id="liveScore" data-i18n="pill.idle">开始一段番茄吧</div>
         </div>
       </div>
 
       <div class="keys keys-5">
         <div class="key">
           <span class="key-icon"><svg viewBox="0 0 24 24" class="i"><use href="#i-enter"/></svg></span>
-          <div><b id="enterCount">0</b><span>Enter · 本段</span></div>
+          <div><b id="enterCount">0</b><span data-i18n="key.enter">Enter · 本段</span></div>
         </div>
         <div class="key">
           <span class="key-icon"><svg viewBox="0 0 24 24" class="i"><use href="#i-back"/></svg></span>
-          <div><b id="backspaceCount">0</b><span>Backspace · 本段</span></div>
+          <div><b id="backspaceCount">0</b><span data-i18n="key.backspace">Backspace · 本段</span></div>
         </div>
         <div class="key">
           <span class="key-icon"><svg viewBox="0 0 24 24" class="i"><use href="#i-space"/></svg></span>
-          <div><b id="spaceCount">0</b><span>空格 · 本段</span></div>
+          <div><b id="spaceCount">0</b><span data-i18n="key.space">空格 · 本段</span></div>
         </div>
         <div class="key">
           <span class="key-icon"><svg viewBox="0 0 24 24" class="i"><use href="#i-mouse"/></svg></span>
-          <div><b id="clickCount">0</b><span>左键 · 本段</span></div>
+          <div><b id="clickCount">0</b><span data-i18n="key.click">左键 · 本段</span></div>
         </div>
         <div class="key">
           <span class="key-icon"><svg viewBox="0 0 24 24" class="i"><use href="#i-wheel"/></svg></span>
-          <div><b id="wheelCount">0</b><span>滚轮 · 本段</span></div>
+          <div><b id="wheelCount">0</b><span data-i18n="key.wheel">滚轮 · 本段</span></div>
         </div>
       </div>
 
       <div class="controls">
-        <button id="btnStart" class="btn-main"><svg viewBox="0 0 24 24" class="i solid"><use href="#i-play"/></svg>开始专注</button>
-        <button id="btnResume" class="btn-main" hidden><svg viewBox="0 0 24 24" class="i solid"><use href="#i-play"/></svg>继续</button>
-        <button id="btnPause" class="btn-soft" hidden><svg viewBox="0 0 24 24" class="i solid"><use href="#i-pause"/></svg>暂停</button>
-        <button id="btnFinish" class="btn-soft" hidden><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg>提前完成</button>
+        <button id="btnStart" class="btn-main"><svg viewBox="0 0 24 24" class="i solid"><use href="#i-play"/></svg><span data-i18n="btn.start">开始专注</span></button>
+        <button id="btnResume" class="btn-main" hidden><svg viewBox="0 0 24 24" class="i solid"><use href="#i-play"/></svg><span data-i18n="btn.resume">继续</span></button>
+        <button id="btnPause" class="btn-soft" hidden><svg viewBox="0 0 24 24" class="i solid"><use href="#i-pause"/></svg><span data-i18n="btn.pause">暂停</span></button>
+        <button id="btnFinish" class="btn-soft" hidden><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg><span data-i18n="btn.finish">提前完成</span></button>
       </div>
       <div class="sub-controls">
-        <button id="btnSkip" class="btn-link"><svg viewBox="0 0 24 24" class="i"><use href="#i-skip"/></svg>跳过本段</button>
-        <button id="btnReset" class="btn-link"><svg viewBox="0 0 24 24" class="i"><use href="#i-reset"/></svg>复位</button>
+        <button id="btnSkip" class="btn-link"><svg viewBox="0 0 24 24" class="i"><use href="#i-skip"/></svg><span data-i18n="btn.skip">跳过本段</span></button>
+        <button id="btnReset" class="btn-link"><svg viewBox="0 0 24 24" class="i"><use href="#i-reset"/></svg><span data-i18n="btn.reset">复位</span></button>
       </div>
     </section>
 
     <div class="side">
       <!-- 累计概览 -->
       <section class="card">
-        <div class="card-head"><h2><svg viewBox="0 0 24 24" class="i"><use href="#i-chart"/></svg>累计概览</h2></div>
+        <div class="card-head"><h2><svg viewBox="0 0 24 24" class="i"><use href="#i-chart"/></svg><span data-i18n="stats.title">累计概览</span></h2></div>
         <div class="stats">
-          <div class="stat"><b id="statFocusCount">0</b><span>专注段</span></div>
-          <div class="stat"><b id="statTotalE">0</b><span>总 Enter</span></div>
-          <div class="stat"><b id="statAvgScore">--</b><span>平均专注分</span></div>
+          <div class="stat"><b id="statFocusCount">0</b><span data-i18n="stats.focusCount">专注段</span></div>
+          <div class="stat"><b id="statTotalE">0</b><span data-i18n="stats.totalEnter">总 Enter</span></div>
+          <div class="stat"><b id="statAvgScore">--</b><span data-i18n="stats.avgScore">平均专注分</span></div>
         </div>
-        <p class="formula" id="formulaLine">专注分 = 80 × 本段速率 ÷ 基线速率（同任务），首段 80 分建档</p>
+        <p class="formula" id="formulaLine" data-i18n="formula">专注分 = 80 × 本段速率 ÷ 基线速率（同任务），首段 80 分建档</p>
       </section>
 
       <!-- 配置 -->
       <section class="card">
-        <div class="card-head"><h2><svg viewBox="0 0 24 24" class="i"><use href="#i-sliders"/></svg>设置</h2></div>
+        <div class="card-head"><h2><svg viewBox="0 0 24 24" class="i"><use href="#i-sliders"/></svg><span data-i18n="cfg.title">设置</span></h2></div>
         <div class="form-grid">
-          <label>专注时长 <small>分钟</small><input id="cfgFocus" type="number" min="1" max="180" /></label>
-          <label>短休时长 <small>分钟</small><input id="cfgShort" type="number" min="1" max="60" /></label>
-          <label>长休时长 <small>分钟</small><input id="cfgLong" type="number" min="1" max="120" /></label>
-          <label>几段进长休 <small>个</small><input id="cfgEvery" type="number" min="1" max="12" /></label>
+          <label><span><span data-i18n="cfg.focusMin">专注时长</span> <small data-i18n="cfg.unitMin">分钟</small></span><input id="cfgFocus" type="number" min="1" max="180" /></label>
+          <label><span><span data-i18n="cfg.shortMin">短休时长</span> <small data-i18n="cfg.unitMin">分钟</small></span><input id="cfgShort" type="number" min="1" max="60" /></label>
+          <label><span><span data-i18n="cfg.longMin">长休时长</span> <small data-i18n="cfg.unitMin">分钟</small></span><input id="cfgLong" type="number" min="1" max="120" /></label>
+          <label><span><span data-i18n="cfg.every">几段进长休</span> <small data-i18n="cfg.unitCount">个</small></span><input id="cfgEvery" type="number" min="1" max="12" /></label>
         </div>
+
+        <div class="cfg-lang">
+          <span class="cfg-lang-label"><svg viewBox="0 0 24 24" class="i"><use href="#i-globe"/></svg><span data-i18n="cfg.lang">语言</span></span>
+          <div class="mode-seg cfg-lang-seg" id="langSeg">
+            <button id="btnLangZh" class="mode-btn">中文</button>
+            <button id="btnLangEn" class="mode-btn">English</button>
+          </div>
+          <span class="hint" data-i18n="cfg.lang.note">切换后界面立即变为该语言</span>
+        </div>
+
         <div class="cfg-foot">
-          <label class="switch"><input id="cfgTest" type="checkbox" /><span class="track"><span class="thumb"></span></span>测试模式</label>
-          <button id="btnSaveCfg" class="btn-main sm">保存</button>
+          <label class="switch"><input id="cfgTest" type="checkbox" /><span class="track"><span class="thumb"></span></span><span data-i18n="cfg.testMode">测试模式</span></label>
+          <button id="btnSaveCfg" class="btn-main sm" data-i18n="cfg.save">保存</button>
         </div>
         <div class="cfg-remind">
-          <span class="cfg-remind-label">段结束提醒<small>开关改动立即生效（不用点保存），三个渠道各自独立</small></span>
+          <span class="cfg-remind-label"><span data-i18n="cfg.remind.title">段结束提醒</span><small data-i18n="cfg.remind.note">开关改动立即生效（不用点保存），三个渠道各自独立</small></span>
           <div class="cfg-remind-opts">
-            <label class="switch"><input id="cfgNotifySystem" type="checkbox" /><span class="track"><span class="thumb"></span></span>系统通知</label>
-            <label class="switch"><input id="cfgNotifyPopup" type="checkbox" /><span class="track"><span class="thumb"></span></span>应用内大弹窗</label>
-            <label class="switch"><input id="cfgNotifyWeb" type="checkbox" /><span class="track"><span class="thumb"></span></span>浏览器网页</label>
+            <label class="switch"><input id="cfgNotifySystem" type="checkbox" /><span class="track"><span class="thumb"></span></span><span data-i18n="cfg.remind.system">系统通知</span></label>
+            <label class="switch"><input id="cfgNotifyPopup" type="checkbox" /><span class="track"><span class="thumb"></span></span><span data-i18n="cfg.remind.popup">应用内大弹窗</span></label>
+            <label class="switch"><input id="cfgNotifyWeb" type="checkbox" /><span class="track"><span class="thumb"></span></span><span data-i18n="cfg.remind.web">浏览器网页</span></label>
           </div>
           <div class="cfg-remind-test">
-            <button id="btnTestRemind" class="btn-link">立即测试提醒</button>
-            <span class="hint" id="remindTestHint">发一条示例提醒，确认这三个渠道你是否都能看到</span>
+            <button id="btnTestRemind" class="btn-link" data-i18n="cfg.remind.test">立即测试提醒</button>
+            <span class="hint" id="remindTestHint" data-i18n="cfg.remind.hint">发一条示例提醒，确认这三个渠道你是否都能看到</span>
           </div>
         </div>
       </section>
@@ -156,48 +167,48 @@
   <main id="viewTrend" hidden>
     <div class="trend-wrap">
       <div class="trend-toolbar">
-        <button id="btnBackMain" class="btn-view"><svg viewBox="0 0 24 24" class="i"><use href="#i-left"/></svg>返回专注</button>
+        <button id="btnBackMain" class="btn-view"><svg viewBox="0 0 24 24" class="i"><use href="#i-left"/></svg><span data-i18n="trend.back">返回专注</span></button>
         <div class="day-nav">
-          <button id="btnPrevDay" class="day-btn" title="前一天"><svg viewBox="0 0 24 24" class="i"><use href="#i-left"/></svg></button>
-          <b id="dayLabel">今天</b>
-          <button id="btnNextDay" class="day-btn" title="后一天"><svg viewBox="0 0 24 24" class="i"><use href="#i-right"/></svg></button>
-          <button id="btnToday" class="btn-link" hidden>回到今天</button>
+          <button id="btnPrevDay" class="day-btn" data-i18n-title="trend.prevDay"><svg viewBox="0 0 24 24" class="i"><use href="#i-left"/></svg></button>
+          <b id="dayLabel">--</b>
+          <button id="btnNextDay" class="day-btn" data-i18n-title="trend.nextDay"><svg viewBox="0 0 24 24" class="i"><use href="#i-right"/></svg></button>
+          <button id="btnToday" class="btn-link" hidden data-i18n="trend.todayBtn">回到今天</button>
         </div>
-        <button id="btnClear" class="btn-link"><svg viewBox="0 0 24 24" class="i"><use href="#i-trash"/></svg>清空历史</button>
+        <button id="btnClear" class="btn-link"><svg viewBox="0 0 24 24" class="i"><use href="#i-trash"/></svg><span data-i18n="trend.clear">清空历史</span></button>
       </div>
 
       <section class="card day-summary">
         <div class="stats">
-          <div class="stat"><b id="dayFocusCount">0</b><span>专注段</span></div>
-          <div class="stat"><b id="dayFocusMin">0</b><span>专注分钟</span></div>
+          <div class="stat"><b id="dayFocusCount">0</b><span data-i18n="stats.focusCount">专注段</span></div>
+          <div class="stat"><b id="dayFocusMin">0</b><span data-i18n="trend.focusMin">专注分钟</span></div>
           <div class="stat"><b id="dayTotalE">0</b><span>Enter</span></div>
-          <div class="stat"><b id="dayAvgScore">--</b><span>平均专注分</span></div>
+          <div class="stat"><b id="dayAvgScore">--</b><span data-i18n="stats.avgScore">平均专注分</span></div>
         </div>
       </section>
 
       <section class="card">
         <div class="card-head">
-          <h2><svg viewBox="0 0 24 24" class="i"><use href="#i-chart"/></svg>当天专注趋势</h2>
+          <h2><svg viewBox="0 0 24 24" class="i"><use href="#i-chart"/></svg><span data-i18n="trend.chartTitle">当天专注趋势</span></h2>
           <div class="card-actions">
-            <span class="legend" id="trendLegend"><i></i>专注分 · 一天内按时间连续展示</span>
+            <span class="legend" id="trendLegend"></span>
             <div class="mode-seg" id="metricSeg" hidden>
-              <button id="btnMGeneral" class="mode-btn active">一般</button>
-              <button id="btnMOutput" class="mode-btn">输出</button>
-              <button id="btnMReading" class="mode-btn">阅读</button>
+              <button id="btnMGeneral" class="mode-btn active" data-i18n="trend.m.general">一般</button>
+              <button id="btnMOutput" class="mode-btn" data-i18n="trend.m.output">输出</button>
+              <button id="btnMReading" class="mode-btn" data-i18n="trend.m.reading">阅读</button>
             </div>
             <div class="mode-seg">
-              <button id="btnModeDay" class="mode-btn active">整天</button>
-              <button id="btnModeFine" class="mode-btn">5 分钟</button>
+              <button id="btnModeDay" class="mode-btn active" data-i18n="trend.mode.day">整天</button>
+              <button id="btnModeFine" class="mode-btn" data-i18n="trend.mode.fine">5 分钟</button>
             </div>
           </div>
         </div>
         <canvas id="historyChart"></canvas>
         <div class="baseline-box">
-          <p class="baseline-cap" id="baselineCap">基线 · 未分类</p>
+          <p class="baseline-cap" id="baselineCap">--</p>
           <div class="baseline-row">
-            <div class="bl-cell none" id="blCellOutput"><span class="bl-name">输出 · 空格</span><b class="bl-val">无基线</b></div>
-            <div class="bl-cell none" id="blCellGeneral"><span class="bl-name">一般 · Enter+左键</span><b class="bl-val">无基线</b></div>
-            <div class="bl-cell none" id="blCellReading"><span class="bl-name">阅读 · 滚轮</span><b class="bl-val">无基线</b></div>
+            <div class="bl-cell none" id="blCellOutput"><span class="bl-name" data-i18n="bl.output">输出 · 空格</span><b class="bl-val">--</b></div>
+            <div class="bl-cell none" id="blCellGeneral"><span class="bl-name" data-i18n="bl.general">一般 · Enter+左键</span><b class="bl-val">--</b></div>
+            <div class="bl-cell none" id="blCellReading"><span class="bl-name" data-i18n="bl.reading">阅读 · 滚轮</span><b class="bl-val">--</b></div>
           </div>
         </div>
       </section>
@@ -205,27 +216,36 @@
       <!-- 基线样本 -->
       <section class="card">
         <div class="card-head">
-          <h2><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg>基线样本</h2>
-          <button id="btnAutoBaseline" class="btn-link" hidden>恢复自动基线</button>
+          <h2><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg><span data-i18n="bl.samples.title">基线样本</span></h2>
+          <button id="btnAutoBaseline" class="btn-link" hidden data-i18n="bl.samples.auto">恢复自动基线</button>
         </div>
-        <p class="bl-hint">觉得哪几段状态不错？勾选它们作为 80 分基线；不勾选则自动取该任务最近 20 段的「中位数±3 段均值」。基线变更后，趋势图/概览分数实时重算。</p>
+        <p class="bl-hint" data-i18n="bl.samples.hint">觉得哪几段状态不错？勾选它们作为 80 分基线；不勾选则自动取该任务最近 20 段的「中位数±3 段均值」。基线变更后，趋势图/概览分数实时重算。</p>
         <div class="bl-list" id="baselineList"></div>
       </section>
 
       <section class="card">
         <div class="card-head">
-          <h2><svg viewBox="0 0 24 24" class="i"><use href="#i-tomato"/></svg>专注热力图</h2>
+          <h2><svg viewBox="0 0 24 24" class="i"><use href="#i-tomato"/></svg><span data-i18n="heat.title">专注热力图</span></h2>
           <span class="heat-legend">
-            <span>少</span><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><span>多</span>
+            <span data-i18n="heat.less">少</span><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><span data-i18n="heat.more">多</span>
           </span>
         </div>
         <canvas id="heatChart"></canvas>
       </section>
 
       <section class="card">
-        <div class="card-head"><h2><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg>当天记录</h2></div>
+        <div class="card-head"><h2><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg><span data-i18n="table.title">当天记录</span></h2></div>
         <table id="historyTable">
-          <thead><tr><th>类型</th><th>任务</th><th>开始</th><th>计数 E/S/C/W</th><th>输出</th><th>一般</th><th>阅读</th><th></th></tr></thead>
+          <thead><tr>
+            <th data-i18n="table.type">类型</th>
+            <th data-i18n="table.task">任务</th>
+            <th data-i18n="table.start">开始</th>
+            <th data-i18n="table.counts">计数 E/S/C/W</th>
+            <th data-i18n="label.output">输出</th>
+            <th data-i18n="label.general">一般</th>
+            <th data-i18n="label.reading">阅读</th>
+            <th></th>
+          </tr></thead>
           <tbody></tbody>
         </table>
       </section>
@@ -239,46 +259,46 @@
     <div class="guide-card" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
       <div class="guide-head">
         <span class="mark"><svg viewBox="0 0 24 24" class="i"><use href="#i-tomato"/></svg></span>
-        <h2 id="guideTitle">开始前，30 秒看懂 3 件事</h2>
+        <h2 id="guideTitle" data-i18n="guide.title">开始前，30 秒看懂 3 件事</h2>
       </div>
 
       <div class="guide-body">
         <!-- ① 番茄工作法 -->
         <section class="g-step">
-          <div class="g-step-head"><b class="g-num">1</b><b>一个番茄 = 25 分钟专注 + 5 分钟休息</b></div>
+          <div class="g-step-head"><b class="g-num">1</b><b data-i18n="guide.s1.title">一个番茄 = 25 分钟专注 + 5 分钟休息</b></div>
           <div class="g-tomato-line">
-            <span class="g-seg f" style="flex:25">专注 25</span>
-            <span class="g-seg b" style="flex:5" title="短休 5 分钟"></span>
-            <span class="g-seg f" style="flex:25">专注 25</span>
-            <span class="g-seg b" style="flex:5" title="短休 5 分钟"></span>
-            <span class="g-seg f" style="flex:25">专注 25</span>
-            <span class="g-seg b" style="flex:5" title="短休 5 分钟"></span>
-            <span class="g-seg f" style="flex:25">专注 25</span>
-            <span class="g-seg lng" style="flex:15">长休 15</span>
+            <span class="g-seg f" style="flex:25" data-i18n="guide.s1.focus">专注 25</span>
+            <span class="g-seg b" style="flex:5" data-i18n-title="guide.s1.shortTitle"></span>
+            <span class="g-seg f" style="flex:25" data-i18n="guide.s1.focus">专注 25</span>
+            <span class="g-seg b" style="flex:5" data-i18n-title="guide.s1.shortTitle"></span>
+            <span class="g-seg f" style="flex:25" data-i18n="guide.s1.focus">专注 25</span>
+            <span class="g-seg b" style="flex:5" data-i18n-title="guide.s1.shortTitle"></span>
+            <span class="g-seg f" style="flex:25" data-i18n="guide.s1.focus">专注 25</span>
+            <span class="g-seg lng" style="flex:15" data-i18n="guide.s1.long">长休 15</span>
           </div>
-          <p class="g-note">每 4 个番茄后来一次长休息；所有时长都能在「设置」里改。</p>
+          <p class="g-note" data-i18n="guide.s1.note">每 4 个番茄后来一次长休息；所有时长都能在「设置」里改。</p>
         </section>
 
         <!-- ② 休息自动，开始手动 -->
         <section class="g-step">
-          <div class="g-step-head"><b class="g-num">2</b><b>休息自动进入，下一个番茄要手动开始</b></div>
+          <div class="g-step-head"><b class="g-num">2</b><b data-i18n="guide.s2.title">休息自动进入，下一个番茄要手动开始</b></div>
           <div class="g-flow">
-            <span class="g-box f">专注</span>
-            <span class="g-arrow auto"><i>自动</i><b>→</b></span>
-            <span class="g-box b">休息</span>
-            <span class="g-arrow manual"><i>⚠ 手动点「开始专注」</i><b>→</b></span>
-            <span class="g-box f">专注</span>
+            <span class="g-box f" data-i18n="guide.s2.focus">专注</span>
+            <span class="g-arrow auto"><i data-i18n="guide.s2.auto">自动</i><b>→</b></span>
+            <span class="g-box b" data-i18n="guide.s2.break">休息</span>
+            <span class="g-arrow manual"><i data-i18n="guide.s2.manual">⚠ 手动点「开始专注」</i><b>→</b></span>
+            <span class="g-box f" data-i18n="guide.s2.focus">专注</span>
           </div>
-          <p class="g-warn">休息结束不会自动开始 —— 忘了点，时间就白白溜走！</p>
+          <p class="g-warn" data-i18n="guide.s2.warn">休息结束不会自动开始 —— 忘了点，时间就白白溜走！</p>
         </section>
 
         <!-- ③ 测一段就有基线，越测越准 -->
         <section class="g-step">
-          <div class="g-step-head"><b class="g-num">3</b><b>测一段就有基线，越测越准</b></div>
+          <div class="g-step-head"><b class="g-num">3</b><b data-i18n="guide.s3.title">测一段就有基线，越测越准</b></div>
           <div class="g-metrics">
-            <span class="g-metric"><svg viewBox="0 0 24 24" class="i"><use href="#i-space"/></svg>空格 → 输出</span>
-            <span class="g-metric"><svg viewBox="0 0 24 24" class="i"><use href="#i-enter"/></svg>+<svg viewBox="0 0 24 24" class="i"><use href="#i-mouse"/></svg>→ 一般</span>
-            <span class="g-metric"><svg viewBox="0 0 24 24" class="i"><use href="#i-wheel"/></svg>滚轮 → 阅读</span>
+            <span class="g-metric"><svg viewBox="0 0 24 24" class="i"><use href="#i-space"/></svg><span data-i18n="guide.s3.output">空格 → 输出</span></span>
+            <span class="g-metric"><svg viewBox="0 0 24 24" class="i"><use href="#i-enter"/></svg>+<svg viewBox="0 0 24 24" class="i"><use href="#i-mouse"/></svg><span data-i18n="guide.s3.general">→ 一般</span></span>
+            <span class="g-metric"><svg viewBox="0 0 24 24" class="i"><use href="#i-wheel"/></svg><span data-i18n="guide.s3.reading">滚轮 → 阅读</span></span>
           </div>
           <div class="g-baseline-row">
             <figure class="g-chart">
@@ -286,7 +306,7 @@
                 <line x1="8" y1="30" x2="132" y2="30" stroke="#e5534b" stroke-width="1.5" stroke-dasharray="5 4"/>
                 <circle cx="70" cy="30" r="5" fill="#e5534b" stroke="#fff" stroke-width="2"/>
               </svg>
-              <figcaption>第 1 段<br><b>80 分建档</b></figcaption>
+              <figcaption><span data-i18n="guide.s3.fig1a">第 1 段</span><br><b data-i18n="guide.s3.fig1b">80 分建档</b></figcaption>
             </figure>
             <figure class="g-chart">
               <svg viewBox="0 0 140 60">
@@ -297,7 +317,7 @@
                 <circle cx="100" cy="26" r="3.5" fill="#e5534b" opacity=".65"/>
                 <circle cx="120" cy="31" r="3.5" fill="#e5534b" opacity=".65"/>
               </svg>
-              <figcaption>几段之后<br><b>中位数 ±3 段定基线</b></figcaption>
+              <figcaption><span data-i18n="guide.s3.fig2a">几段之后</span><br><b data-i18n="guide.s3.fig2b">中位数 ±3 段定基线</b></figcaption>
             </figure>
             <figure class="g-chart">
               <svg viewBox="0 0 140 60">
@@ -305,16 +325,16 @@
                 <polyline points="12,50 32,42 52,37 72,34 92,32 112,31 130,30.5" fill="none" stroke="#2e9a71" stroke-width="2" stroke-linecap="round"/>
                 <circle cx="130" cy="30.5" r="4" fill="#2e9a71" stroke="#fff" stroke-width="1.5"/>
               </svg>
-              <figcaption>20 段之后<br><b>基线稳 · 分数可信</b></figcaption>
+              <figcaption><span data-i18n="guide.s3.fig3a">20 段之后</span><br><b data-i18n="guide.s3.fig3b">基线稳 · 分数可信</b></figcaption>
             </figure>
           </div>
-          <p class="g-note">之后每段：<b>专注分 = 80 × 本段速率 ÷ 基线速率</b>，达到基线 = 80 分。三项指标各算各的基线，也可在「基线样本」里手动勾选状态好的段。</p>
+          <p class="g-note" data-i18n-html="guide.s3.note">之后每段：<b>专注分 = 80 × 本段速率 ÷ 基线速率</b>，达到基线 = 80 分。三项指标各算各的基线，也可在「基线样本」里手动勾选状态好的段。</p>
         </section>
       </div>
 
       <div class="guide-actions">
-        <button id="btnGuideAck" class="btn-main"><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg>我已知晓，不再出现</button>
-        <button id="btnGuideClose" class="btn-soft">关闭</button>
+        <button id="btnGuideAck" class="btn-main"><svg viewBox="0 0 24 24" class="i"><use href="#i-check"/></svg><span data-i18n="guide.ack">我已知晓，不再出现</span></button>
+        <button id="btnGuideClose" class="btn-soft" data-i18n="guide.close">关闭</button>
       </div>
     </div>
   </div>
@@ -323,16 +343,17 @@
     <div class="remind-card" id="remindCard">
       <img class="remind-hero" id="remindHero" alt="" hidden />
       <div class="remind-body">
-        <p class="remind-kicker" id="remindKicker">本段结果</p>
+        <p class="remind-kicker" id="remindKicker">TomatoFocus</p>
         <h2 class="remind-title" id="remindTitle"></h2>
         <div class="remind-lines" id="remindLines"></div>
       </div>
       <div class="remind-actions">
-        <button id="btnRemindFocus" class="btn-main" hidden><svg viewBox="0 0 24 24" class="i solid"><use href="#i-play"/></svg>开始专注</button>
-        <button id="btnRemindClose" class="btn-soft">知道了</button>
+        <button id="btnRemindFocus" class="btn-main" hidden><svg viewBox="0 0 24 24" class="i solid"><use href="#i-play"/></svg><span data-i18n="remind.start">开始专注</span></button>
+        <button id="btnRemindClose" class="btn-soft" data-i18n="remind.close">知道了</button>
       </div>
     </div>
   </div>
+  <script src="./i18n.js"></script>
   <script src="./renderer.js"></script>
 </body>
 </html>
