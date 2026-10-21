@@ -124,7 +124,7 @@ score = max(0, round(80 × 本段该指标速率 ÷ 该指标基线速率))     
 ### 下载安装包（推荐）
 
 到 [**Releases**](https://github.com/XiaoSaT/tomato-focus/releases/latest) 下载最新的
-`TomatoFocus Setup x.y.z.exe`（NSIS 安装包，约 91 MB），双击安装即可，无需管理员权限，也不需要 Node.js。
+`TomatoFocus-Setup-x.y.z.exe`（NSIS 安装包，约 91 MB），双击安装即可，无需管理员权限，也不需要 Node.js。
 
 > 安装包未做代码签名，Windows SmartScreen 可能提示「Windows 已保护你的电脑」，
 > 点「更多信息 → 仍要运行」即可；介意的话可以直接从源码构建。

@@ -28,3 +28,4 @@ scripts/notify-probe.js
 scripts/recover-sessions.mjs
 scripts/test-short-session.md
 publish-github.ps1
+release-notes-*.md
