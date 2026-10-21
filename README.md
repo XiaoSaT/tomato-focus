@@ -11,11 +11,11 @@
 
 Windows 10/11 · Electron · TypeScript · 100% 本地运行
 
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?logo=windows&logoColor=white)](#-运行要求)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6?logo=windows&logoColor=white)](#运行要求)
 [![Electron](https://img.shields.io/badge/Electron-37-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Status](https://img.shields.io/badge/status-private%20preview-orange)](#-项目状态)
-[![Privacy](https://img.shields.io/badge/privacy-local--only-brightgreen)](#-数据与隐私)
+[![Status](https://img.shields.io/badge/status-private%20preview-orange)](#项目状态)
+[![Privacy](https://img.shields.io/badge/privacy-local--only-brightgreen)](#数据与隐私)
 
 中文 · [English](#english)
 
@@ -159,7 +159,7 @@ npm run dist       # 输出 NSIS 安装包到 release/
 ### 杀软 / EDR 提示
 
 全局键盘钩子（`WH_KEYBOARD_LL`）是键盘记录器的常用技术，因此本程序有可能被杀软或 EDR 告警。
-这是技术手段撞车，不是行为恶意 —— 代码全部开源，欢迎自行审计。如被拦截：
+这是技术手段撞车，不是行为恶意 —— 源码完整可读，欢迎自行审计。如被拦截：
 把安装目录加入白名单；若要对外分发，建议做代码签名。
 
 ## 全局钩子与远程桌面
@@ -208,7 +208,7 @@ npm run dist         # 打包 NSIS 安装包
 
 - 主进程日志直接打在终端；渲染层用 `Ctrl+Shift+I` 开 DevTools。
 - 钩子状态、当前段 ID、userData 路径会在启动日志里打印。
-- 段数据被误清空时，可从 `events/*.jsonl` 按段 ID 重建归档（见 `scripts/recover-sessions.mjs`）。
+- 原始事件日志带 `phase` / `seg` 字段，`seg` 与 `config.json` 中 `sessions[].id` 一致，可直接 join 做二次分析。
 
 ## 已知限制与 Roadmap
 
@@ -232,13 +232,13 @@ npm run dist         # 打包 NSIS 安装包
 
 ---
 
-<h1 id="english">English</h1>
+## English
 
 **TomatoFocus** is a Windows-only Pomodoro timer that measures how focused you actually were,
 not just how much time passed.
 
-While a focus session runs, a low-level keyboard/mouse hook (`uiohook-napi`) counts four kinds of
-behavior and turns them into three independent focus scores:
+While a focus session runs, a low-level keyboard/mouse hook (`uiohook-napi`) counts five kinds of
+input events and turns them into three independent focus scores:
 
 | Score | Signal |
 |---|---|
