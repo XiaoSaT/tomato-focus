@@ -109,7 +109,7 @@ score = max(0, round(80 × 本段该指标速率 ÷ 该指标基线速率))     
 ### 从源码运行（当前推荐）
 
 ```bash
-git clone https://github.com/<your-name>/tomato-focus.git
+git clone https://github.com/XiaoSaT/tomato-focus.git
 cd tomato-focus
 npm install
 npm start          # 构建 + 启动（专注 25 / 短休 5 / 长休 15）
@@ -271,7 +271,7 @@ theoretically reveal typed text, so treat `events/*.jsonl` as private data.
 **Run it:**
 
 ```bash
-git clone https://github.com/<your-name>/tomato-focus.git
+git clone https://github.com/XiaoSaT/tomato-focus.git
 cd tomato-focus
 npm install
 npm start            # normal mode: 25 / 5 / 15
